@@ -1,0 +1,10 @@
+
+Nodejs API
+
+Nodejs v16.18.0
+Angular CLI 8.3.23
+BD Mysql Workbench 8.0 CE
+
+- Alta de usuarios
+- Inicio de sesion con usuarios
+- Validación de sesion con JWT
