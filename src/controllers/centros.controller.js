@@ -8,7 +8,7 @@ var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 export const createCentro = async (req, res) => {
   try {
     
-    const { nombre, telefono, correo, direccion} = req.body;
+    const { nombre, telefono, correo, direccion, id_usuario} = req.body;
     //console.log(req.body)
     const [rows] = await pool.query(
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -52,14 +52,14 @@ export const getCentro = async (req, res) => {
   };
 
   export const updateCentro = async (req, res) => {
+    console.log("update")
     try {
       const { id } = req.params;
       const { nombre, telefono, correo, direccion } = req.body;
   
       const [result] = await pool.query(
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        "UPDATE centros SET nombre = IFNULL(?, nombre), telefono = IFNULL(?, telefono), correo = IFNULL(?, correo) WHERE id = ?",
-        [nombre, telefono, correo, direccion, id]
+        "UPDATE centros SET nombre = IFNULL(?, nombre), telefono = IFNULL(?, telefono), correo = IFNULL(?, correo), direccion = IFNULL(?, direccion) WHERE id = ?",[nombre, telefono, correo, direccion, id]
       );
   
       if (result.affectedRows === 0)
