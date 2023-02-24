@@ -4,7 +4,8 @@ import {
   getCentros,
   createCentro,
   updateCentro,
-  deleteCentro
+  deleteCentro,
+  getCentroByIdUsuario
 } from "../controllers/centros.controller.js";
 
 const router = Router();
@@ -24,6 +25,9 @@ router.patch(path+"/:id", updateCentro);
 
 // DELETE
 router.delete(path+"/:id", deleteCentro);
+
+// GET One
+router.get(path+"/usuario/:id_usuario", getCentroByIdUsuario);
 
 
 export default router;

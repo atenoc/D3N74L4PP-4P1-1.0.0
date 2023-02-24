@@ -42,6 +42,7 @@ export const getCentro = async (req, res) => {
       ]);
   
       if (rows.length <= 0) {
+        console.log("Centro no encontrado")
         return res.status(404).json({ message: "Centro no encontrado" });
       }
   
@@ -49,9 +50,9 @@ export const getCentro = async (req, res) => {
     } catch (error) {
       return res.status(500).json({ message: "Error bd obtener Centro" });
     }
-  };
+};
 
-  export const updateCentro = async (req, res) => {
+export const updateCentro = async (req, res) => {
     console.log("update")
     try {
       const { id } = req.params;
@@ -73,9 +74,9 @@ export const getCentro = async (req, res) => {
     } catch (error) {
       return res.status(500).json({ message: "Error bd actualizar Centro" });
     }
-  };
+};
 
-  export const deleteCentro = async (req, res) => {
+export const deleteCentro = async (req, res) => {
     try {
       const { id } = req.params;
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -91,4 +92,26 @@ export const getCentro = async (req, res) => {
     } catch (error) {
       return res.status(500).json({ message: "Error DB Delete Centro" });
     }
-  };
+};
+
+export const getCentroByIdUsuario = async (req, res) => {
+  try {
+    const { id_usuario } = req.params;
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    const [rows] = await pool.query("SELECT * FROM centros WHERE id_usuario = ?", [
+      id_usuario,
+    ]);
+
+    if (rows.length <= 0) {
+      console.log("Centro no encontrado por id_usuario")
+      return res.status(404).json({ message: "Centro no encontrado" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    return res.status(500).json({ message: "Error bd obtener Centro" });
+  }
+};
+
+
+  
