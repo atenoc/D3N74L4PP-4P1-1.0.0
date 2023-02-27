@@ -17,7 +17,7 @@ CREATE TABLE centros (
   nombre VARCHAR(40) DEFAULT NULL,
   telefono VARCHAR(10) DEFAULT NULL,
   correo VARCHAR(30) DEFAULT NULL,
-  direccion VARCHAR(100) DEFAULT NULL,
+  direccion VARCHAR(130) DEFAULT NULL,
   fecha_creacion VARCHAR(30) DEFAULT NULL,
   id_usuario INT(11) NOT NULL,
   PRIMARY KEY(id)
