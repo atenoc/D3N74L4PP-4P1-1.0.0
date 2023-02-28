@@ -21,7 +21,7 @@ export const createUser = async (req, res) => {
     
   } catch (error) {
     console.log(error)
-    return res.status(500).json({ message: "Error bd insertar Usuario" });
+    return res.status(500).json({ message: "Ocurrió un error al registrar el usuario" });
   }
 };
 
@@ -31,7 +31,7 @@ export const getUsers = async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM usuarios");
     res.json(rows);
   } catch (error) {
-    return res.status(500).json({ message: "Error bd obtener Usuarios" });
+    return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });
   }
 };
 
@@ -49,7 +49,7 @@ export const getUser = async (req, res) => {
   
       res.json(rows[0]);
     } catch (error) {
-      return res.status(500).json({ message: "Error bd obtener Usuario" });
+      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario" });
     }
   };
 
@@ -73,7 +73,7 @@ export const getUser = async (req, res) => {
   
       res.json(rows[0]);
     } catch (error) {
-      return res.status(500).json({ message: "Error bd actualizar Usuario" });
+      return res.status(500).json({ message: "Ocurrió un error al actualizar la información del usuario" });
     }
   };
 
@@ -91,6 +91,6 @@ export const getUser = async (req, res) => {
       //res.sendStatus(200);
       res.json({"status":"Id:"+ id +" - Usuario eliminado"});
     } catch (error) {
-      return res.status(500).json({ message: "Error DB Delete Usuario" });
+      return res.status(500).json({ message: "Ocurrió un error al eliminar el usuario" });
     }
   };
