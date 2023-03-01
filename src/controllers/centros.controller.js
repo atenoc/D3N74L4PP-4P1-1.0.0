@@ -19,7 +19,7 @@ export const createCentro = async (req, res) => {
     
   } catch (error) {
     console.log(error)
-    return res.status(500).json({ message: "Error bd insertar Centro" });
+    return res.status(500).json({ message: "Ocurrió un error al registrar el centro dental" });
   }
 };
 
@@ -29,7 +29,7 @@ export const getCentros = async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM centros");
     res.json(rows);
   } catch (error) {
-    return res.status(500).json({ message: "Error bd obtener Centros" });
+    return res.status(500).json({ message: "Ocurrió un error al obtener los centros" });
   }
 };
 
@@ -48,7 +48,7 @@ export const getCentro = async (req, res) => {
   
       res.json(rows[0]);
     } catch (error) {
-      return res.status(500).json({ message: "Error bd obtener Centro" });
+      return res.status(500).json({ message: "Ocurrió un error al obtener el centro dental" });
     }
 };
 
@@ -72,7 +72,7 @@ export const updateCentro = async (req, res) => {
   
       res.json(rows[0]);
     } catch (error) {
-      return res.status(500).json({ message: "Error bd actualizar Centro" });
+      return res.status(500).json({ message: "Ocurrió un error al actualizar la información del centro dental" });
     }
 };
 
@@ -90,7 +90,7 @@ export const deleteCentro = async (req, res) => {
       //res.sendStatus(200);
       res.json({"status":"Id:"+ id +" - Centro eliminado"});
     } catch (error) {
-      return res.status(500).json({ message: "Error DB Delete Centro" });
+      return res.status(500).json({ message: "Ocurrió un error al eliminar el centro dental" });
     }
 };
 
@@ -121,7 +121,7 @@ export const getCentroByIdUsuario = async (req, res) => {
 
     res.json(rows[0]);
   } catch (error) {
-    return res.status(500).json({ message: "Error bd obtener Centro" });
+    return res.status(500).json({ message: "Ocurrió un error al obtener el centro" });
   }
 };
 
