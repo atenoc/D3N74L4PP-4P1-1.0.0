@@ -7,18 +7,16 @@ var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 
 export const createCentro = async (req, res) => {
   try {
-    
     const { nombre, telefono, correo, direccion, id_usuario} = req.body;
-    //console.log(req.body)
     const [rows] = await pool.query(
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      "INSERT INTO centros (nombre, telefono, correo, direccion, fecha_creacion, id_usuario) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO centros (id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario) VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, UUID_TO_BIN(?))",
       [nombre, telefono, correo, direccion, fecha_creacion, id_usuario]
     );
     res.status(201).json({ id: rows.insertId, nombre, telefono, correo, direccion, fecha_creacion, id_usuario });
     
   } catch (error) {
-    console.log(error)
+    //console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al registrar el centro dental" });
   }
 };
@@ -26,9 +24,10 @@ export const createCentro = async (req, res) => {
 export const getCentros = async (req, res) => {
   try {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    const [rows] = await pool.query("SELECT * FROM centros");
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM centros");
     res.json(rows);
   } catch (error) {
+    //console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los centros" });
   }
 };
@@ -37,7 +36,7 @@ export const getCentro = async (req, res) => {
     try {
       const { id } = req.params;
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      const [rows] = await pool.query("SELECT * FROM centros WHERE id = ?", [
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario FROM centros WHERE BIN_TO_UUID(id) = ?", [
         id,
       ]);
   
@@ -48,30 +47,31 @@ export const getCentro = async (req, res) => {
   
       res.json(rows[0]);
     } catch (error) {
+      //console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al obtener el centro dental" });
     }
 };
 
 export const updateCentro = async (req, res) => {
-    console.log("update")
     try {
       const { id } = req.params;
       const { nombre, telefono, correo, direccion } = req.body;
   
       const [result] = await pool.query(
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        "UPDATE centros SET nombre = IFNULL(?, nombre), telefono = IFNULL(?, telefono), correo = IFNULL(?, correo), direccion = IFNULL(?, direccion) WHERE id = ?",[nombre, telefono, correo, direccion, id]
+        "UPDATE centros SET nombre = IFNULL(?, nombre), telefono = IFNULL(?, telefono), correo = IFNULL(?, correo), direccion = IFNULL(?, direccion) WHERE BIN_TO_UUID(id) = ?",[nombre, telefono, correo, direccion, id]
       );
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Centro no encontrado" });
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        const [rows] = await pool.query("SELECT * FROM centros WHERE id = ?", [
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario FROM centros WHERE BIN_TO_UUID(id) = ?", [
         id,
       ]);
   
       res.json(rows[0]);
     } catch (error) {
+      //console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al actualizar la información del centro dental" });
     }
 };
@@ -80,7 +80,7 @@ export const deleteCentro = async (req, res) => {
     try {
       const { id } = req.params;
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      const [rows] = await pool.query("DELETE FROM centros WHERE id = ?", [id]);
+      const [rows] = await pool.query("DELETE FROM centros WHERE id = uuid_to_bin(?)", [id]);
   
       if (rows.affectedRows <= 0) {
         return res.status(404).json({ message: "Centro no encontrado" });
@@ -90,6 +90,7 @@ export const deleteCentro = async (req, res) => {
       //res.sendStatus(200);
       res.json({"status":"Id:"+ id +" - Centro eliminado"});
     } catch (error) {
+      //console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al eliminar el centro dental" });
     }
 };
@@ -98,7 +99,7 @@ export const getCentroByIdUsuario = async (req, res) => {
   try {
     const { id_usuario } = req.params;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    const [rows] = await pool.query("SELECT * FROM centros WHERE id_usuario = ?", [
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario FROM centros WHERE BIN_TO_UUID(id_usuario) = ?", [
       id_usuario,
     ]);
 
@@ -121,6 +122,7 @@ export const getCentroByIdUsuario = async (req, res) => {
 
     res.json(rows[0]);
   } catch (error) {
+    //console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener el centro" });
   }
 };

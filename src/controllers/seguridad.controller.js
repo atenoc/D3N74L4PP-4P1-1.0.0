@@ -20,11 +20,12 @@ export const createRegistro = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        console.log("Logueando, recibiendo datos...")
+        console.log(">>>>>>>>>> >>>>>>>>>> Logueando, recibiendo datos... <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
         console.log(req.body)
 
         const { correo, llave } =  req.body
-        const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ? AND llave = ?", [
+        //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ? AND llave = ?", [
+          const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion FROM usuarios WHERE correo = ? AND llave = ? ", [
             correo, llave
         ]);
 
@@ -50,7 +51,8 @@ export const userByCorreo = async (req, res) => {
       const {correo } = req.params;
       console.log("Se recibe correo: " + correo)
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
+      //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion FROM usuarios WHERE correo = ?", [  
         correo,
       ]);
   
