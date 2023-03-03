@@ -1,23 +1,6 @@
 import { pool } from "../db.js";
 import jwt from "jsonwebtoken"
 
-/*
-export const createRegistro = async (req, res) => {
-    try {
-        const { nombre, email, pass } = req.body;
-        const [rows] = await pool.query(
-          "INSERT INTO users (nombre, email, pass) VALUES (?, ?, ?)",
-          [nombre, email, pass]
-        );
-        //res.status(201).json({ id: rows.insertId, nombre, email, pass });
-        const token = jwt.sign({_id: rows.insertId}, 'secretkey') // crear un token
-        res.status(200).json({token}) //devolver el token al usuario 
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ message: "Error al crear Usuario" });
-    }
-}*/
-
 export const login = async (req, res) => {
     try {
         console.log(">>>>>>>>>> >>>>>>>>>> Logueando, recibiendo datos... <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
