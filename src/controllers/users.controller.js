@@ -8,14 +8,14 @@ var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 export const createUser = async (req, res) => {
   try {
     
-    const { correo, llave, rol } = req.body;
+    const { correo, llave, rol, id_usuario } = req.body;
     //console.log("fecha_creacion: "+fecha_creacion)
     const [rows] = await pool.query(
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      "INSERT INTO usuarios (id, correo, llave, rol, fecha_creacion) VALUES (UUID_TO_BIN(UUID()),?, ?, ?, ?)",
-      [correo, llave, rol, fecha_creacion]
+      "INSERT INTO usuarios (id, correo, llave, rol, fecha_creacion, id_usuario) VALUES (UUID_TO_BIN(UUID()),?, ?, ?, ?, UUID_TO_BIN(?))",
+      [correo, llave, rol, fecha_creacion, id_usuario]
     );
-    res.status(201).json({ id: rows.insertId, correo, llave, rol, fecha_creacion });
+    res.status(201).json({ id: rows.insertId, correo, llave, rol, fecha_creacion, id_usuario });
     
   } catch (error) {
     //console.log(error)
@@ -27,7 +27,7 @@ export const getUsers = async (req, res) => {
   try {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // const [rows] = await pool.query("SELECT * FROM usuarios");
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion from usuarios");
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios");
     res.json(rows);
   } catch (error) {
     //console.log(error)
@@ -40,7 +40,7 @@ export const getUser = async (req, res) => {
       const { id } = req.params;
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       // const [rows] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
         id,
       ]);
   

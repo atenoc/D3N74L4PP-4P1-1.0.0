@@ -9,6 +9,7 @@ CREATE TABLE usuarios (
   llave VARCHAR(30) DEFAULT NULL,
   rol VARCHAR(30) DEFAULT NULL,
   fecha_creacion VARCHAR(30) DEFAULT NULL,
+  id_usuario BINARY(16) NOT NULL,
   PRIMARY KEY(id)
 );
 
