@@ -99,3 +99,19 @@ export const getUser = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al eliminar el usuario" });
     }
   };
+
+  export const getUsersByUser = async (req, res) => {
+    try {
+      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      // const [rows] = await pool.query("SELECT * FROM usuarios");
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+      const { id } = req.params;
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios WHERE BIN_TO_UUID(id_usuario) = ?", [id]);
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+      console.log("ROWS: "+rows)
+      res.json(rows);
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios (por usuario)" });
+    }
+  };
