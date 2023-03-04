@@ -104,7 +104,7 @@ export const getCentroByIdUsuario = async (req, res) => {
     ]);
 
     if (rows.length <= 0) {
-      console.log("Centro no encontrado por id_usuario")
+      console.log("Centro no encontrado (por id_usuario)")
       //return res.status(404).json({ message: "Centro no encontrado" });
       // Se retorna un json con los datos del centro en vacio, para no mostrar el error del 404 en consola
       return res.json(
@@ -123,7 +123,7 @@ export const getCentroByIdUsuario = async (req, res) => {
     res.json(rows[0]);
   } catch (error) {
     //console.log(error)
-    return res.status(500).json({ message: "Ocurrió un error al obtener el centro" });
+    return res.status(500).json({ message: "Ocurrió un error al obtener el centro (por id_usuario)" });
   }
 };
 

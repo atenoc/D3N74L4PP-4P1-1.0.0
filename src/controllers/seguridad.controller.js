@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken"
 export const login = async (req, res) => {
     try {
         console.log(">>>>>>>>>> >>>>>>>>>> Logueando, recibiendo datos... <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
-        console.log(req.body)
+        //console.log(req.body)
 
         const { correo, llave } =  req.body
         //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ? AND llave = ?", [
@@ -24,15 +24,15 @@ export const login = async (req, res) => {
         }
 
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ message: "Error bd obtener Usuario | seguridad controller" });
+        //console.log(error)
+        return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (login)" });
     }
 }
 
 export const userByCorreo = async (req, res) => {
     try {
       const {correo } = req.params;
-      console.log("Se recibe correo: " + correo)
+      //console.log("Se recibe correo: " + correo)
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
       const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion FROM usuarios WHERE correo = ?", [  
@@ -40,16 +40,17 @@ export const userByCorreo = async (req, res) => {
       ]);
   
       if (rows.length <= 0) {
-        return res.status(404).json({ message: "Usuario no encontrado por correo" });
+        return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
       }
   
       res.json(rows[0]);
     } catch (error) {
-      return res.status(500).json({ message: "Error bd obtener Usuario por correo" });
+      //console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por correo)" });
     }
   };
 
 export const getRestringido = async (req, res) => {
-    //Validar token en la cabecera -> Authorization = Bearer + token
+    // POSTMAN: Validar token en la cabecera -> Authorization = Bearer + token
     return res.json({status: 'Acceso a ruta protegida :D' })
 }
