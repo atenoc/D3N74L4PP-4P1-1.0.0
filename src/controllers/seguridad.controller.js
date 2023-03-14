@@ -29,27 +29,6 @@ export const login = async (req, res) => {
     }
 }
 
-export const userByCorreo = async (req, res) => {
-    try {
-      const {correo } = req.params;
-      //console.log("Se recibe correo: " + correo)
-      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion FROM usuarios WHERE correo = ?", [  
-        correo,
-      ]);
-  
-      if (rows.length <= 0) {
-        return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
-      }
-  
-      res.json(rows[0]);
-    } catch (error) {
-      //console.log(error)
-      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por correo)" });
-    }
-  };
-
 export const getRestringido = async (req, res) => {
     // POSTMAN: Validar token en la cabecera -> Authorization = Bearer + token
     return res.json({status: 'Acceso a ruta protegida :D' })

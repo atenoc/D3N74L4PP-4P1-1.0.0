@@ -17,7 +17,7 @@ app.use(cors()) //
 
 // Routes
 app.use("/", indexRoutes);
-app.use("/api/seguridad", seguridadRoutes);
+app.use("/api", seguridadRoutes);
 app.use("/api", usersRoutes);
 app.use("/api", centrosRoutes);
 
