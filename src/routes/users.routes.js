@@ -1,31 +1,39 @@
 import { Router } from "express";
+import { verificarToken } from "../controllers/verificarToken.js";
 import {
   getUser,
   getUsers,
   createUser,
   updateUser,
   deleteUser,
-  getUsersByUser
+  getUserByCorreo,
+  getUsersByIdUser
+  
 } from "../controllers/users.controller.js";
 
 const router = Router();
+const path = "/usuarios"
 
-// INSERT An User
-router.post("/usuarios", createUser);
+// POST One
+router.post(path, verificarToken, createUser);
 
-// GET all Users
-router.get("/usuarios", getUsers);
+// GET All
+router.get(path, verificarToken, getUsers);
 
-// GET An User
-router.get("/usuarios/:id", getUser);
+// GET One
+router.get(path+"/:id", verificarToken, getUser);
 
-// PATCH an User
-router.patch("/usuarios/:id", updateUser);
+// PATCH One
+router.patch(path+"/:id", verificarToken, updateUser);
 
-// DELETE An User
-router.delete("/usuarios/:id", deleteUser);
+// DELETE One
+router.delete(path+"/:id", verificarToken, deleteUser);
 
-// GET Users By An User
-router.get("/usuarios/usuario/:id", getUsersByUser);
+// GET One By
+router.get(path+"/usuarioxcorreo/:correo", verificarToken, getUserByCorreo)
+
+// GET All By
+router.get(path+"/usuario/:id", verificarToken, getUsersByIdUser);
+
 
 export default router;
