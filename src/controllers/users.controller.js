@@ -104,7 +104,7 @@ export const getUser = async (req, res) => {
   
       //res.sendStatus(204);
       //res.sendStatus(200);
-      res.json({"status":"Id:"+ id +" - Usuario eliminado"});
+      res.json({id});
     } catch (error) {
       //console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al eliminar el usuario" });
