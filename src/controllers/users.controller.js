@@ -7,10 +7,18 @@ var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 
 export const createUser = async (req, res) => {
   try {
-    
     const { correo, llave, rol, id_usuario } = req.body;
+
+    // Validar si el correo ya existe en la base de datos
+    const [existingUser] = await pool.execute("SELECT id FROM usuarios WHERE correo = ?", [correo]);
+
+    if (existingUser.length > 0) {
+      // Si el correo ya existe, retornar un error
+      return res.status(400).json({ message: "200" });
+    }
+
+    // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(
-      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       "INSERT INTO usuarios (id, correo, llave, rol, fecha_creacion, id_usuario) VALUES (UUID_TO_BIN(UUID()),?, ?, ?, ?, UUID_TO_BIN(?))",
       [correo, llave, rol, fecha_creacion, id_usuario]
     );
@@ -19,7 +27,6 @@ export const createUser = async (req, res) => {
       console.log("Usuario registrado")
     }
 
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM usuarios WHERE correo = ?", [correo]);
 
     if (!idResult.length) {
@@ -33,6 +40,7 @@ export const createUser = async (req, res) => {
     return res.status(500).json({ message: "Ocurrió un error al registrar el usuario" });
   }
 };
+
 
 export const getUsers = async (req, res) => {
   try {
