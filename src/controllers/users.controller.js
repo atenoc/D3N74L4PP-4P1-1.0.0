@@ -39,7 +39,21 @@ export const getUsers = async (req, res) => {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // const [rows] = await pool.query("SELECT * FROM usuarios");
     const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios");
-    res.json(rows);
+    // Formatear la lista de usuarios antes de enviarla como respuesta
+    const usuariosFormateados = rows.map(response => {
+      const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
+      const usuario_formateado = {
+        id: response.id,
+        correo: response.correo,
+        llave: response.lave,
+        rol: response.rol,
+        fecha_creacion: fecha_formateada,
+        id_usuario: response.id_usuario
+      };
+      return usuario_formateado;
+    });
+
+    res.json(usuariosFormateados);
   } catch (error) {
     //console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });

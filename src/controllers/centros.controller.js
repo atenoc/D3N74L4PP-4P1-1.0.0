@@ -25,7 +25,23 @@ export const getCentros = async (req, res) => {
   try {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM centros");
-    res.json(rows);
+    // Formatear la lista de antes de enviarla como respuesta
+    const centrosFormateados = rows.map(response => {
+      const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
+      const centro_formateado = {
+        id: response.id,
+        nombre: response.nombre,
+        telefono: response.telefono,
+        correo: response.correo,
+        direccion: response.direccion,
+        fecha_creacion: fecha_formateada,
+        id_usuario: response.id_usuario
+      };
+      return centro_formateado;
+    });
+
+    res.json(centrosFormateados);
+    //res.json(rows);
   } catch (error) {
     //console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los centros" });
