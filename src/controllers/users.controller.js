@@ -46,7 +46,7 @@ export const getUsers = async (req, res) => {
   try {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // const [rows] = await pool.query("SELECT * FROM usuarios");
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios");
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios ORDER BY autoincremental DESC");
     // Formatear la lista de usuarios antes de enviarla como respuesta
     const usuariosFormateados = rows.map(response => {
       const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
