@@ -7,10 +7,18 @@ var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 
 export const createUser = async (req, res) => {
   try {
-    
     const { correo, llave, rol, id_usuario } = req.body;
+
+    // Validar si el correo ya existe en la base de datos
+    const [existingUser] = await pool.execute("SELECT id FROM usuarios WHERE correo = ?", [correo]);
+
+    if (existingUser.length > 0) {
+      // Si el correo ya existe, retornar un error
+      return res.status(400).json({ message: "200" });
+    }
+
+    // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(
-      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       "INSERT INTO usuarios (id, correo, llave, rol, fecha_creacion, id_usuario) VALUES (UUID_TO_BIN(UUID()),?, ?, ?, ?, UUID_TO_BIN(?))",
       [correo, llave, rol, fecha_creacion, id_usuario]
     );
@@ -19,7 +27,6 @@ export const createUser = async (req, res) => {
       console.log("Usuario registrado")
     }
 
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM usuarios WHERE correo = ?", [correo]);
 
     if (!idResult.length) {
@@ -34,12 +41,27 @@ export const createUser = async (req, res) => {
   }
 };
 
+
 export const getUsers = async (req, res) => {
   try {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // const [rows] = await pool.query("SELECT * FROM usuarios");
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios");
-    res.json(rows);
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios ORDER BY autoincremental DESC");
+    // Formatear la lista de usuarios antes de enviarla como respuesta
+    const usuariosFormateados = rows.map(response => {
+      const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
+      const usuario_formateado = {
+        id: response.id,
+        correo: response.correo,
+        llave: response.lave,
+        rol: response.rol,
+        fecha_creacion: fecha_formateada,
+        id_usuario: response.id_usuario
+      };
+      return usuario_formateado;
+    });
+
+    res.json(usuariosFormateados);
   } catch (error) {
     //console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });

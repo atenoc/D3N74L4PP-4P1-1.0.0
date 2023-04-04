@@ -8,15 +8,28 @@ var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 export const createCentro = async (req, res) => {
   try {
     const { nombre, telefono, correo, direccion, id_usuario} = req.body;
-    const [rows] = await pool.query(
+    const [result] = await pool.query(
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       "INSERT INTO centros (id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario) VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, UUID_TO_BIN(?))",
       [nombre, telefono, correo, direccion, fecha_creacion, id_usuario]
     );
-    res.status(201).json({ id: rows.insertId, nombre, telefono, correo, direccion, fecha_creacion, id_usuario });
+    if (result.affectedRows === 1) {
+      console.log("Centro registrado")
+    }
+
+    const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM centros WHERE nombre = ? AND telefono = ? AND BIN_TO_UUID(id_usuario) = ?", [nombre, telefono, id_usuario]);
+
+    if (!idResult.length) {
+      return res.status(500).json({ message: "No se encontró el ID del centro insertado" });
+    }
+
+    const { id } = idResult[0];
+    res.status(201).json({ id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario });
+
+    //res.status(201).json({ id: rows.insertId, nombre, telefono, correo, direccion, fecha_creacion, id_usuario });
     
   } catch (error) {
-    //console.log(error)
+    console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al registrar el centro dental" });
   }
 };
@@ -24,8 +37,24 @@ export const createCentro = async (req, res) => {
 export const getCentros = async (req, res) => {
   try {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM centros");
-    res.json(rows);
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM centros ORDER BY autoincremental DESC");
+    // Formatear la lista de antes de enviarla como respuesta
+    const centrosFormateados = rows.map(response => {
+      const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
+      const centro_formateado = {
+        id: response.id,
+        nombre: response.nombre,
+        telefono: response.telefono,
+        correo: response.correo,
+        direccion: response.direccion,
+        fecha_creacion: fecha_formateada,
+        id_usuario: response.id_usuario
+      };
+      return centro_formateado;
+    });
+
+    res.json(centrosFormateados);
+    //res.json(rows);
   } catch (error) {
     //console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los centros" });
