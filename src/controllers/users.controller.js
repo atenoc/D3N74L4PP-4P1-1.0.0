@@ -7,7 +7,8 @@ var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 
 export const createUser = async (req, res) => {
   try {
-    const { correo, llave, rol, id_usuario } = req.body;
+    console.log(req.body)
+    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_centro } = req.body;
 
     // Validar si el correo ya existe en la base de datos
     const [existingUser] = await pool.execute("SELECT id FROM usuarios WHERE correo = ?", [correo]);
@@ -19,8 +20,8 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(
-      "INSERT INTO usuarios (id, correo, llave, rol, fecha_creacion, id_usuario) VALUES (UUID_TO_BIN(UUID()),?, ?, ?, ?, UUID_TO_BIN(?))",
-      [correo, llave, rol, fecha_creacion, id_usuario]
+      "INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro) VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))",
+      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro]
     );
 
     if (result.affectedRows === 1) {
@@ -34,9 +35,10 @@ export const createUser = async (req, res) => {
     }
 
     const { id } = idResult[0];
-    res.status(201).json({ id, correo, llave, rol, fecha_creacion, id_usuario });
+    res.status(201).json({ id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro });
     
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al registrar el usuario" });
   }
 };
@@ -46,7 +48,7 @@ export const getUsers = async (req, res) => {
   try {
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // const [rows] = await pool.query("SELECT * FROM usuarios");
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios ORDER BY autoincremental DESC");
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario, BIN_TO_UUID(id_centro)id_centro FROM usuarios ORDER BY autoincremental DESC");
     // Formatear la lista de usuarios antes de enviarla como respuesta
     const usuariosFormateados = rows.map(response => {
       const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
@@ -55,8 +57,15 @@ export const getUsers = async (req, res) => {
         correo: response.correo,
         llave: response.lave,
         rol: response.rol,
+        titulo: response.titulo,
+        nombre: response.nombre, 
+        apellidop: response.apellidop, 
+        apellidom: response.apellidom, 
+        especialidad: response.especialidad, 
+        telefono: response.telefono,
         fecha_creacion: fecha_formateada,
-        id_usuario: response.id_usuario
+        id_usuario: response.id_usuario,
+        id_centro: response.id_centro
       };
       return usuario_formateado;
     });
@@ -73,7 +82,7 @@ export const getUser = async (req, res) => {
       const { id } = req.params;
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       // const [rows] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario, BIN_TO_UUID(id_centro)id_centro FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
         id,
       ]);
   
@@ -91,13 +100,13 @@ export const getUser = async (req, res) => {
   export const updateUser = async (req, res) => {
     try {
       const { id } = req.params;
-      const { correo, llave, rol } = req.body;
+      const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono } = req.body;
   
       const [result] = await pool.query(
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // "UPDATE usuarios SET correo = IFNULL(?, correo), llave = IFNULL(?, llave), rol = IFNULL(?, rol) WHERE id = ?",
-        "UPDATE usuarios SET correo = IFNULL(?, correo), llave = IFNULL(?, llave), rol = IFNULL(?, rol) WHERE BIN_TO_UUID(id) = ?",
-        [correo, llave, rol, id]
+        "UPDATE usuarios SET correo = IFNULL(?, correo), llave = IFNULL(?, llave), rol = IFNULL(?, rol), titulo = IFNULL(?, titulo), nombre = IFNULL(?, nombre), apellidop = IFNULL(?, apellidop), apellidom = IFNULL(?, apellidom), especialidad = IFNULL(?, especialidad), telefono = IFNULL(?, telefono) WHERE BIN_TO_UUID(id) = ?",
+        [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id]
       );
   
       if (result.affectedRows === 0)
@@ -140,7 +149,7 @@ export const getUser = async (req, res) => {
       console.log("Se recibe correo: " + correo)
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario) id_usuario FROM usuarios WHERE correo = ?", [  
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, nombre FROM usuarios WHERE correo = ?", [  
         correo,
       ]);
   
@@ -160,7 +169,7 @@ export const getUser = async (req, res) => {
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       // const [rows] = await pool.query("SELECT * FROM usuarios");
       const { id } = req.params;
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM usuarios WHERE BIN_TO_UUID(id_usuario) = ?", [id]);
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario, BIN_TO_UUID(id_centro)id_centro FROM usuarios WHERE BIN_TO_UUID(id_usuario) = ?", [id]);
       res.json(rows);
     } catch (error) {
       //console.log(error)
