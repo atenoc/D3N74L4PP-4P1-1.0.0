@@ -9,6 +9,7 @@ export const createUser = async (req, res) => {
   try {
     console.log(req.body)
     const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_centro } = req.body;
+    const llave_status=0;
 
     // Validar si el correo ya existe en la base de datos
     const [existingUser] = await pool.execute("SELECT id FROM usuarios WHERE correo = ?", [correo]);
@@ -20,8 +21,8 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(
-      "INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro) VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))",
-      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro]
+      "INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, llave_status, id_usuario, id_centro) VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))",
+      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, llave_status, id_usuario, id_centro]
     );
 
     if (result.affectedRows === 1) {
@@ -149,7 +150,7 @@ export const getUser = async (req, res) => {
       console.log("Se recibe correo: " + correo)
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, nombre FROM usuarios WHERE correo = ?", [  
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, nombre, llave_status FROM usuarios WHERE correo = ?", [  
         correo,
       ]);
   
@@ -164,6 +165,7 @@ export const getUser = async (req, res) => {
     }
   };
 
+
   export const getUsersByIdUser = async (req, res) => {
     try {
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -174,6 +176,30 @@ export const getUser = async (req, res) => {
     } catch (error) {
       //console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios (por id usuario)" });
+    }
+  };
+
+  export const updateUserPassword = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { llave } = req.body;
+      const llave_status=1
+  
+      const [result] = await pool.query(
+        "UPDATE usuarios SET llave = IFNULL(?, llave), llave_status = IFNULL(?, llave_status) WHERE BIN_TO_UUID(id) = ?",
+        [llave, llave_status, id]
+      );
+  
+      if (result.affectedRows === 0)
+        return res.status(404).json({ message: "Usuario no encontrado" });
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
+        id,
+      ]);
+  
+      res.json(rows[0]);
+    } catch (error) {
+      //console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al actualizar la contraseña" });
     }
   };
 
