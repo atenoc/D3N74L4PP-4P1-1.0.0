@@ -9,6 +9,7 @@ export const createUser = async (req, res) => {
   try {
     console.log(req.body)
     const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_centro } = req.body;
+    const llave_estatus = 0;
 
     // Validar si el correo ya existe en la base de datos
     const [existingUser] = await pool.execute("SELECT id FROM usuarios WHERE correo = ?", [correo]);
@@ -20,8 +21,8 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(
-      "INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro) VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))",
-      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro]
+      "INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_centro) VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))",
+      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_centro]
     );
 
     if (result.affectedRows === 1) {
