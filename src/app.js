@@ -6,6 +6,7 @@ import indexRoutes from "./routes/index.routes.js";
 import seguridadRoutes from "./routes/seguridad.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import centrosRoutes from "./routes/centros.routes.js";
+import catRoutes from "./routes/cat_rol.routes.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/", indexRoutes);
 app.use("/api", seguridadRoutes);
 app.use("/api", usersRoutes);
 app.use("/api", centrosRoutes);
+app.use("/api", catRoutes);
 
 app.use((req, res, next) => {
   res.status(404).json({ message: "End point no encontrado" });
