@@ -28,7 +28,7 @@ export const createRol = async (req, res) => {
 
 export const getRoles = async (req, res) => {
     try {
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, codigo, descripcion FROM cat_roles ORDER BY autoincremental DESC");
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, descripcion FROM cat_roles ORDER BY autoincremental DESC");
       res.json(rows);
     } catch (error) {
       console.log("getRoles:: "+ error)
@@ -39,7 +39,7 @@ export const getRoles = async (req, res) => {
 export const getRol = async (req, res) => {
     try {
       const { id } = req.params;
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, codigo, descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = ?", [
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = ?", [
         id,
       ]);
   
@@ -57,16 +57,16 @@ export const getRol = async (req, res) => {
 export const updateRol = async (req, res) => {
     try {
       const { id } = req.params;
-      const { codigo, descripcion } = req.body;
+      const { descripcion } = req.body;
   
       const [result] = await pool.query(
-        "UPDATE cat_roles SET codigo = IFNULL(?, codigo), descripcion = IFNULL(?, descripcion) WHERE BIN_TO_UUID(id) = ?",
-        [codigo, descripcion, id]
+        "UPDATE cat_roles SET descripcion = IFNULL(?, descripcion) WHERE BIN_TO_UUID(id) = ?",
+        [descripcion, id]
       );
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Rol no encontrado" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, codigo, descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = ?", [
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = ?", [
         id,
       ]);
   
