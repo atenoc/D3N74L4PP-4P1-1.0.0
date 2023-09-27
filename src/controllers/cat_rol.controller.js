@@ -14,7 +14,7 @@ export const createRol = async (req, res) => {
       const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM cat_roles WHERE descripcion = ?", [descripcion]);
   
       if (!idResult.length) {
-        return res.status(500).json({ message: "No se encontró el ID cat_rol insertado" });
+        return res.status(500).json({ message: "No se encontró el ID rol insertado" });
       }
   
       const { id } = idResult[0];
@@ -31,8 +31,8 @@ export const getRoles = async (req, res) => {
       const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, codigo, descripcion FROM cat_roles ORDER BY autoincremental DESC");
       res.json(rows);
     } catch (error) {
-      console.log(error)
-      return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });
+      console.log("getRoles:: "+ error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener los roles" });
     }
 };
 
