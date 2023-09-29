@@ -1,5 +1,6 @@
 import { pool } from "../db.js";
 import  moment  from "moment";
+import { esUUID } from "../utils/validacionUUID.js";
 
 const fecha_hoy = new Date();
 //                            format('YYYY-MM-DD');
@@ -10,6 +11,11 @@ export const createUser = async (req, res) => {
     console.log(req.body)
     const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_centro } = req.body;
     const llave_estatus = 0;
+
+    //comprobar si los parámetros son UUID / caso contrario insertarlos como null
+    const tituloUUID = esUUID(titulo) ? titulo : null;
+    const especialidadUUID = esUUID(especialidad) ? especialidad : null;
+
 
     // Validar si el correo ya existe en la base de datos
     const [existingUser] = await pool.execute("SELECT id FROM usuarios WHERE correo = ?", [correo]);
@@ -23,7 +29,7 @@ export const createUser = async (req, res) => {
     const [result] = await pool.execute(`
       INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_centro) 
       VALUES (UUID_TO_BIN(UUID()),?,?,?,UUID_TO_BIN(?),?,?,?,UUID_TO_BIN(?),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
-      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_centro]
+      [correo, llave, rol, tituloUUID, nombre, apellidop, apellidom, especialidadUUID, llave_estatus, telefono, fecha_creacion, id_usuario, id_centro]
     );
 
     if (result.affectedRows === 1) {
@@ -238,5 +244,6 @@ export const getUser = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios (por id usuario)" });
     }
   };
+
 
   
