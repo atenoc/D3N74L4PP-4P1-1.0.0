@@ -61,7 +61,7 @@ export const getUsers = async (req, res) => {
       u.apellidom, 
       e.descripcion AS especialidad,  -- Usar la descripción en lugar del UUID
       u.telefono, 
-      DATE_FORMAT(u.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion,
+      u.fecha_creacion AS fecha_creacion,
       BIN_TO_UUID(id_usuario)id_usuario,  
       (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_centro) AS id_centro 
@@ -72,7 +72,7 @@ export const getUsers = async (req, res) => {
     `);
     // Formatear la lista de usuarios antes de enviarla como respuesta
     const usuariosFormateados = rows.map(response => {
-      const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
+      const fecha_formateada = moment(response.fecha_creacion).format('DD/MM/YYYY HH:mm:ss');
       const usuario_formateado = {
         id: response.id,
         correo: response.correo,
@@ -92,6 +92,7 @@ export const getUsers = async (req, res) => {
       return usuario_formateado;
     });
 
+    console.log(usuariosFormateados)
     res.json(usuariosFormateados);
   } catch (error) {
     console.log(error)
@@ -109,17 +110,20 @@ export const getUser = async (req, res) => {
           correo, 
           llave, 
           rol, 
-          BIN_TO_UUID(titulo)titulo, 
+          BIN_TO_UUID(titulo)id_titulo,
+            (SELECT descripcion FROM cat_titulos WHERE BIN_TO_UUID(id) = BIN_TO_UUID(titulo)) AS descripcion_titulo, 
           nombre, 
           apellidop, 
           apellidom, 
-          BIN_TO_UUID(especialidad)especialidad, 
+          BIN_TO_UUID(especialidad)id_especialidad,
+            (SELECT descripcion FROM cat_especialidades WHERE BIN_TO_UUID(id) = BIN_TO_UUID(especialidad)) AS descripcion_especialidad, 
           telefono, 
-          fecha_creacion, 
+          DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
           BIN_TO_UUID(id_usuario)id_usuario, 
           BIN_TO_UUID(id_centro)id_centro 
         FROM usuarios 
-        WHERE BIN_TO_UUID(id) = ?`, [id]);
+        WHERE BIN_TO_UUID(id) = ?`
+        ,[id]);
   
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado" });
@@ -130,7 +134,7 @@ export const getUser = async (req, res) => {
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al obtener el usuario" });
     }
-  };
+};
 
   export const updateUser = async (req, res) => {
     try {

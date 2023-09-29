@@ -40,7 +40,7 @@ export const getCentros = async (req, res) => {
     const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM centros ORDER BY autoincremental DESC");
     // Formatear la lista de antes de enviarla como respuesta
     const centrosFormateados = rows.map(response => {
-      const fecha_formateada = moment(response.fecha_creacion).format('DD-MM-YYYY HH:mm:ss');
+      const fecha_formateada = moment(response.fecha_creacion).format('DD/MM/YYYY HH:mm:ss');
       const centro_formateado = {
         id: response.id,
         nombre: response.nombre,
@@ -65,8 +65,18 @@ export const getCentro = async (req, res) => {
     try {
       const { id } = req.params;
       // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario FROM centros WHERE BIN_TO_UUID(id) = ?", [
-        id,
+      const [rows] = await pool.query(`
+        SELECT 
+          BIN_TO_UUID(id) id, 
+          nombre, 
+          telefono, 
+          correo, 
+          direccion, 
+          DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
+          id_usuario 
+        FROM centros 
+        WHERE BIN_TO_UUID(id) = ?`
+        ,[id,
       ]);
   
       if (rows.length <= 0) {
@@ -128,8 +138,18 @@ export const getCentroByIdUsuario = async (req, res) => {
   try {
     const { id_usuario } = req.params;
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario FROM centros WHERE BIN_TO_UUID(id_usuario) = ?", [
-      id_usuario,
+    const [rows] = await pool.query(`
+    SELECT 
+      BIN_TO_UUID(id) id, 
+      nombre, 
+      telefono, 
+      correo, 
+      direccion, 
+      DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
+      id_usuario 
+    FROM centros 
+    WHERE BIN_TO_UUID(id_usuario) = ?`
+    ,[id_usuario,
     ]);
 
     if (rows.length <= 0) {
