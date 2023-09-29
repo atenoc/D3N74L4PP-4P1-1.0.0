@@ -57,6 +57,7 @@ export const getUsers = async (req, res) => {
     // const [rows] = await pool.query("SELECT * FROM usuarios");
     const [rows] = await pool.query(`
     SELECT 
+      ROW_NUMBER() OVER (ORDER BY u.autoincremental DESC) AS contador,
       BIN_TO_UUID(u.id) AS id, 
       u.correo, 
       u.llave, 
@@ -80,6 +81,7 @@ export const getUsers = async (req, res) => {
     const usuariosFormateados = rows.map(response => {
       const fecha_formateada = moment(response.fecha_creacion).format('DD/MM/YYYY HH:mm:ss');
       const usuario_formateado = {
+        contador: response.contador,
         id: response.id,
         correo: response.correo,
         llave: response.lave,
