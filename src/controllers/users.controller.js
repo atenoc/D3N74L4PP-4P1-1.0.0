@@ -144,11 +144,11 @@ export const getUser = async (req, res) => {
           correo = IFNULL(?, correo), 
           llave = IFNULL(?, llave), 
           rol = IFNULL(?, rol), 
-          titulo = IFNULL(?, titulo), 
+          titulo = IFNULL(UUID_TO_BIN(?), titulo), 
           nombre = IFNULL(?, nombre), 
           apellidop = IFNULL(?, apellidop), 
           apellidom = IFNULL(?, apellidom), 
-          especialidad = IFNULL(?, especialidad), 
+          especialidad = IFNULL(UUID_TO_BIN(?), especialidad), 
           telefono = IFNULL(?, telefono) 
         WHERE 
           BIN_TO_UUID(id) = ?`,
