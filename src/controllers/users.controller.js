@@ -108,6 +108,80 @@ export const getUsers = async (req, res) => {
   }
 };
 
+export const getUsersPagination = async (req, res) => {
+  try {
+    const {page, size} = req.query
+    console.log("page: "+page)
+    console.log("size: "+size)
+    const offset = (page - 1) *  size;
+
+    const [rows] = await pool.query(`
+    SELECT 
+      ROW_NUMBER() OVER (ORDER BY u.autoincremental DESC) AS contador,
+      BIN_TO_UUID(u.id) AS id, 
+      u.correo, 
+      u.llave, 
+      u.rol, 
+      t.descripcion AS titulo, 
+      u.nombre, 
+      u.apellidop, 
+      u.apellidom, 
+      e.descripcion AS especialidad,  -- Usar la descripción en lugar del UUID
+      u.telefono, 
+      u.fecha_creacion AS fecha_creacion,
+      BIN_TO_UUID(id_usuario)id_usuario,  
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+      BIN_TO_UUID(u.id_centro) AS id_centro 
+    FROM usuarios u
+    LEFT JOIN cat_titulos t ON u.titulo = t.id
+    LEFT JOIN cat_especialidades e ON u.especialidad = e.id
+    ORDER BY u.autoincremental DESC
+    LIMIT ? OFFSET ?
+    `, [+size, +offset]);
+
+    const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios');
+    const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
+    console.log(totalPages);
+
+    // Formatear la lista de usuarios antes de enviarla como respuesta
+    const usuariosFormateados = rows.map(response => {
+      const fecha_formateada = moment(response.fecha_creacion).format('DD/MM/YYYY HH:mm:ss');
+      const usuario_formateado = {
+        contador: response.contador,
+        id: response.id,
+        correo: response.correo,
+        llave: response.lave,
+        rol: response.rol,
+        titulo: response.titulo,
+        nombre: response.nombre, 
+        apellidop: response.apellidop, 
+        apellidom: response.apellidom, 
+        especialidad: response.especialidad, 
+        telefono: response.telefono,
+        fecha_creacion: fecha_formateada,
+        id_usuario: response.id_usuario,
+        nombre_usuario_creador: response.nombre_usuario_creador,
+        id_centro: response.id_centro
+      };
+      return usuario_formateado;
+    });
+
+    console.log(usuariosFormateados)
+    //res.json(usuariosFormateados);
+    res.json({
+      data: usuariosFormateados,
+      pagination:{
+        page: +page,
+        size: +size,
+        totalPages
+      }
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });
+  }
+};
+
 export const getUser = async (req, res) => {
     try {
       const { id } = req.params;

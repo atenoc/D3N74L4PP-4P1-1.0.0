@@ -3,6 +3,7 @@ import { verificarToken } from "../controllers/verificarToken.js";
 import {
   getUser,
   getUsers,
+  getUsersPagination,
   createUser,
   updateUser,
   deleteUser,
@@ -19,6 +20,7 @@ router.post(path, verificarToken, createUser);
 
 // GET All
 router.get(path, verificarToken, getUsers);
+router.get(path+"/pagination", verificarToken, getUsersPagination);
 
 // GET One
 router.get(path+"/:id", verificarToken, getUser);
