@@ -110,14 +110,22 @@ export const getUsers = async (req, res) => {
 
 export const getUsersPagination = async (req, res) => {
   try {
-    const {page, size} = req.query
+    const { page, size, orderBy, way } = req.query;
     console.log("page: "+page)
     console.log("size: "+size)
+    console.log("orderBy: "+orderBy)
+    console.log("modeOrder: "+way)
     const offset = (page - 1) *  size;
+
+    let orderByClause = "u.autoincremental DESC"; // Orden predeterminado
+    if (orderBy && way) {
+      // Verificar si se proporcionaron orderBy y modeOrder
+      orderByClause = `${"u."+orderBy} ${way}`;
+    }
 
     const [rows] = await pool.query(`
     SELECT 
-      ROW_NUMBER() OVER (ORDER BY u.autoincremental DESC) AS contador,
+      ROW_NUMBER() OVER (ORDER BY ${orderByClause}) AS contador,
       BIN_TO_UUID(u.id) AS id, 
       u.correo, 
       u.llave, 
@@ -135,13 +143,13 @@ export const getUsersPagination = async (req, res) => {
     FROM usuarios u
     LEFT JOIN cat_titulos t ON u.titulo = t.id
     LEFT JOIN cat_especialidades e ON u.especialidad = e.id
-    ORDER BY u.autoincremental DESC
+    ORDER BY ${orderByClause}
     LIMIT ? OFFSET ?
     `, [+size, +offset]);
 
     const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios');
     const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
-    console.log(totalPages);
+    const totalElements = +totalPagesData[0]?.count;
 
     // Formatear la lista de usuarios antes de enviarla como respuesta
     const usuariosFormateados = rows.map(response => {
@@ -173,7 +181,8 @@ export const getUsersPagination = async (req, res) => {
       pagination:{
         page: +page,
         size: +size,
-        totalPages
+        totalPages,
+        totalElements
       }
     })
   } catch (error) {
