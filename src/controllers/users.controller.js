@@ -37,7 +37,7 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(`
-      INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
+      INSERT INTO usuarios (id, correo, llave, rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
       VALUES (UUID_TO_BIN(UUID()),?,?,?,UUID_TO_BIN(?),?,?,?,UUID_TO_BIN(?),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
       [correo, llave, rol, tituloUUID, nombre, apellidop, apellidom, especialidadUUID, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica]
     );
@@ -151,8 +151,8 @@ export const getUsersPagination = async (req, res) => {
       (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
-    LEFT JOIN cat_titulos t ON u.titulo = t.id
-    LEFT JOIN cat_especialidades e ON u.especialidad = e.id
+    LEFT JOIN cat_titulos t ON u.id_titulo = t.id
+    LEFT JOIN cat_especialidades e ON u.id_especialidad = e.id
     ORDER BY ${orderByClause}
     LIMIT ? OFFSET ?
     `, [+size, +offset]);
@@ -211,13 +211,13 @@ export const getUser = async (req, res) => {
           correo, 
           llave, 
           rol, 
-          BIN_TO_UUID(titulo)id_titulo,
-            (SELECT descripcion FROM cat_titulos WHERE BIN_TO_UUID(id) = BIN_TO_UUID(titulo)) AS descripcion_titulo, 
+          BIN_TO_UUID(id_titulo)id_titulo,
+            (SELECT descripcion FROM cat_titulos WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_titulo)) AS descripcion_titulo, 
           nombre, 
           apellidop, 
           apellidom, 
-          BIN_TO_UUID(especialidad)id_especialidad,
-            (SELECT descripcion FROM cat_especialidades WHERE BIN_TO_UUID(id) = BIN_TO_UUID(especialidad)) AS descripcion_especialidad, 
+          BIN_TO_UUID(id_especialidad)id_especialidad,
+            (SELECT descripcion FROM cat_especialidades WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_especialidad)) AS descripcion_especialidad, 
           telefono, 
           DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
           BIN_TO_UUID(id_usuario)id_usuario, 
@@ -249,11 +249,11 @@ export const getUser = async (req, res) => {
           correo = IFNULL(?, correo), 
           llave = IFNULL(?, llave), 
           rol = IFNULL(?, rol), 
-          titulo = IFNULL(UUID_TO_BIN(?), titulo), 
+          id_titulo = IFNULL(UUID_TO_BIN(?), id_titulo), 
           nombre = IFNULL(?, nombre), 
           apellidop = IFNULL(?, apellidop), 
           apellidom = IFNULL(?, apellidom), 
-          especialidad = IFNULL(UUID_TO_BIN(?), especialidad), 
+          id_especialidad = IFNULL(UUID_TO_BIN(?), id_especialidad), 
           telefono = IFNULL(?, telefono) 
         WHERE 
           BIN_TO_UUID(id) = ?`,
@@ -322,11 +322,11 @@ export const getUser = async (req, res) => {
         correo, 
         llave, 
         rol, 
-        BIN_TO_UUID(titulo)titulo, 
+        BIN_TO_UUID(id_titulo)id_titulo, 
         nombre, 
         apellidop, 
         apellidom, 
-        BIN_TO_UUID(especialidad)especialidad, 
+        BIN_TO_UUID(id_especialidad)id_especialidad, 
         telefono, 
         fecha_creacion, 
         BIN_TO_UUID(id_usuario)id_usuario, 
