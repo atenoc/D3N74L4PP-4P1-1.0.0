@@ -3,14 +3,24 @@ import  moment  from "moment";
 import { esUUID } from "../utils/validacionUUID.js";
 
 const fecha_hoy = new Date();
-//                            format('YYYY-MM-DD');
-var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
+var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
+var id_clinica
 
 export const createUser = async (req, res) => {
   try {
     console.log(req.body)
-    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_centro } = req.body;
+    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario} = req.body;
     const llave_estatus = 0;
+
+    //Consultamos el id de la clínica del usuario
+    const [clinicas] = await pool.query(`SELECT BIN_TO_UUID(id) id FROM clinicas WHERE BIN_TO_UUID(id_usuario) = ?`,[id_usuario]);
+    if (clinicas.length > 0 && clinicas[0].id) {
+      id_clinica = clinicas[0].id;
+      console.log("id_clinica:", id_clinica);
+    } else {
+      console.log("No se encontró ninguna clínica para el ID de usuario:", id_usuario);
+      return res.status(500).json({ message: "No tiene registrado su clínica/consultorio dental. " });
+    }
 
     //comprobar si los parámetros son UUID / caso contrario insertarlos como null
     const tituloUUID = esUUID(titulo) ? titulo : null;
@@ -27,9 +37,9 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(`
-      INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_centro) 
+      INSERT INTO usuarios (id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
       VALUES (UUID_TO_BIN(UUID()),?,?,?,UUID_TO_BIN(?),?,?,?,UUID_TO_BIN(?),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
-      [correo, llave, rol, tituloUUID, nombre, apellidop, apellidom, especialidadUUID, llave_estatus, telefono, fecha_creacion, id_usuario, id_centro]
+      [correo, llave, rol, tituloUUID, nombre, apellidop, apellidom, especialidadUUID, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica]
     );
 
     if (result.affectedRows === 1) {
@@ -43,7 +53,7 @@ export const createUser = async (req, res) => {
     }
 
     const { id } = idResult[0];
-    res.status(201).json({ id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_centro });
+    res.status(201).json({ id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_clinica });
     
   } catch (error) {
     console.log(error)
@@ -71,7 +81,7 @@ export const getUsers = async (req, res) => {
       u.fecha_creacion AS fecha_creacion,
       BIN_TO_UUID(id_usuario)id_usuario,  
       (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
-      BIN_TO_UUID(u.id_centro) AS id_centro 
+      BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
     LEFT JOIN cat_titulos t ON u.titulo = t.id
     LEFT JOIN cat_especialidades e ON u.especialidad = e.id
@@ -95,7 +105,7 @@ export const getUsers = async (req, res) => {
         fecha_creacion: fecha_formateada,
         id_usuario: response.id_usuario,
         nombre_usuario_creador: response.nombre_usuario_creador,
-        id_centro: response.id_centro
+        id_clinica: response.id_clinica
       };
       return usuario_formateado;
     });
@@ -139,7 +149,7 @@ export const getUsersPagination = async (req, res) => {
       u.fecha_creacion AS fecha_creacion,
       BIN_TO_UUID(id_usuario)id_usuario,  
       (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
-      BIN_TO_UUID(u.id_centro) AS id_centro 
+      BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
     LEFT JOIN cat_titulos t ON u.titulo = t.id
     LEFT JOIN cat_especialidades e ON u.especialidad = e.id
@@ -169,7 +179,7 @@ export const getUsersPagination = async (req, res) => {
         fecha_creacion: fecha_formateada,
         id_usuario: response.id_usuario,
         nombre_usuario_creador: response.nombre_usuario_creador,
-        id_centro: response.id_centro
+        id_clinica: response.id_clinica
       };
       return usuario_formateado;
     });
@@ -211,7 +221,7 @@ export const getUser = async (req, res) => {
           telefono, 
           DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
           BIN_TO_UUID(id_usuario)id_usuario, 
-          BIN_TO_UUID(id_centro)id_centro 
+          BIN_TO_UUID(id_clinica)id_clinica 
         FROM usuarios 
         WHERE BIN_TO_UUID(id) = ?`
         ,[id]);
@@ -320,7 +330,7 @@ export const getUser = async (req, res) => {
         telefono, 
         fecha_creacion, 
         BIN_TO_UUID(id_usuario)id_usuario, 
-        BIN_TO_UUID(id_centro)id_centro 
+        BIN_TO_UUID(id_clinica)id_clinica 
       FROM usuarios 
       WHERE BIN_TO_UUID(id_usuario) = ?`, [id]);
       res.json(rows);
