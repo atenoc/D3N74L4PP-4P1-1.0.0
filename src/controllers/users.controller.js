@@ -311,7 +311,7 @@ export const getUser = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por correo)" });
     }
   };
-
+/*
   export const getUsersByIdUser = async (req, res) => {
     try {
       // const [rows] = await pool.query("SELECT * FROM usuarios");
@@ -339,6 +339,93 @@ export const getUser = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios (por id usuario)" });
     }
   };
+*/
+
+export const getUsersByIdUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { page, size, orderBy, way } = req.query;
+    console.log("page: " + page);
+    console.log("size: " + size);
+    console.log("orderBy: " + orderBy);
+    console.log("modeOrder: " + way);
+    const offset = (page - 1) * size;
+
+    let orderByClause = "u.autoincremental DESC"; // Orden predeterminado
+    if (orderBy && way) {
+      // Verificar si se proporcionaron orderBy y modeOrder
+      orderByClause = `${"u." + orderBy} ${way}`;
+    }
+
+    const [rows] = await pool.query(`
+    SELECT 
+      ROW_NUMBER() OVER (ORDER BY ${orderByClause}) AS contador,
+      BIN_TO_UUID(u.id) AS id, 
+      u.correo, 
+      u.llave, 
+      u.rol, 
+      t.descripcion AS titulo, 
+      u.nombre, 
+      u.apellidop, 
+      u.apellidom, 
+      e.descripcion AS especialidad,  -- Usar la descripción en lugar del UUID
+      u.telefono, 
+      u.fecha_creacion AS fecha_creacion,
+      BIN_TO_UUID(id_usuario) id_usuario,  
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+      BIN_TO_UUID(u.id_clinica) AS id_clinica 
+    FROM usuarios u
+    LEFT JOIN cat_titulos t ON u.id_titulo = t.id
+    LEFT JOIN cat_especialidades e ON u.id_especialidad = e.id
+    WHERE BIN_TO_UUID(u.id_usuario) = ?  -- Agrega esta cláusula WHERE
+    ORDER BY ${orderByClause}
+    LIMIT ? OFFSET ?
+    `, [id, +size, +offset]);
+
+    const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios WHERE BIN_TO_UUID(id_usuario) = ?', [id]);
+    const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
+    const totalElements = +totalPagesData[0]?.count;
+
+    // Formatear la lista de usuarios antes de enviarla como respuesta
+    const usuariosFormateados = rows.map(response => {
+      const fecha_formateada = moment(response.fecha_creacion).format('DD/MM/YYYY HH:mm:ss');
+      const usuario_formateado = {
+        contador: response.contador,
+        id: response.id,
+        correo: response.correo,
+        llave: response.lave,
+        rol: response.rol,
+        titulo: response.titulo,
+        nombre: response.nombre,
+        apellidop: response.apellidop,
+        apellidom: response.apellidom,
+        especialidad: response.especialidad,
+        telefono: response.telefono,
+        fecha_creacion: fecha_formateada,
+        id_usuario: response.id_usuario,
+        nombre_usuario_creador: response.nombre_usuario_creador,
+        id_clinica: response.id_clinica
+      };
+      return usuario_formateado;
+    });
+
+    console.log(usuariosFormateados);
+    //res.json(usuariosFormateados);
+    res.json({
+      data: usuariosFormateados,
+      pagination: {
+        page: +page,
+        size: +size,
+        totalPages,
+        totalElements
+      }
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });
+  }
+};
+
 
 
   
