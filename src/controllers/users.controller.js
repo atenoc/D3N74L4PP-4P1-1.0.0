@@ -37,8 +37,8 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(`
-      INSERT INTO usuarios (id, correo, llave, rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
-      VALUES (UUID_TO_BIN(UUID()),?,?,?,UUID_TO_BIN(?),?,?,?,UUID_TO_BIN(?),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
+      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
+      VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),UUID_TO_BIN(?),?,?,?,UUID_TO_BIN(?),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
       [correo, llave, rol, tituloUUID, nombre, apellidop, apellidom, especialidadUUID, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica]
     );
 
@@ -61,7 +61,7 @@ export const createUser = async (req, res) => {
   }
 };
 
-
+// old (deprecated)
 export const getUsers = async (req, res) => {
   try {
     // const [rows] = await pool.query("SELECT * FROM usuarios");
@@ -138,26 +138,28 @@ export const getUsersPagination = async (req, res) => {
       ROW_NUMBER() OVER (ORDER BY ${orderByClause}) AS contador,
       BIN_TO_UUID(u.id) AS id, 
       u.correo, 
-      u.llave, 
-      u.rol, 
+      u.llave,
+      r.descripcion AS desc_rol,
       t.descripcion AS titulo, 
       u.nombre, 
       u.apellidop, 
       u.apellidom, 
-      e.descripcion AS especialidad,  -- Usar la descripción en lugar del UUID
+      e.descripcion AS especialidad,  
       u.telefono, 
       u.fecha_creacion AS fecha_creacion,
-      BIN_TO_UUID(id_usuario)id_usuario,  
+      BIN_TO_UUID(id_usuario) id_usuario,  
       (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
+    LEFT JOIN cat_roles r ON u.id_rol = r.id
     LEFT JOIN cat_titulos t ON u.id_titulo = t.id
     LEFT JOIN cat_especialidades e ON u.id_especialidad = e.id
+    WHERE BIN_TO_UUID(u.id_usuario) = ? 
     ORDER BY ${orderByClause}
     LIMIT ? OFFSET ?
     `, [+size, +offset]);
 
-    const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios');
+    const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios WHERE BIN_TO_UUID(id_usuario) = ?', [id]);
     const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
     const totalElements = +totalPagesData[0]?.count;
 
@@ -210,7 +212,8 @@ export const getUser = async (req, res) => {
           BIN_TO_UUID(id) id, 
           correo, 
           llave, 
-          rol, 
+          BIN_TO_UUID(id_rol)id_rol,
+            (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
           BIN_TO_UUID(id_titulo)id_titulo,
             (SELECT descripcion FROM cat_titulos WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_titulo)) AS descripcion_titulo, 
           nombre, 
@@ -248,7 +251,7 @@ export const getUser = async (req, res) => {
           SET 
           correo = IFNULL(?, correo), 
           llave = IFNULL(?, llave), 
-          rol = IFNULL(?, rol), 
+          id_rol = IFNULL(UUID_TO_BIN(?), id_rol), 
           id_titulo = IFNULL(UUID_TO_BIN(?), id_titulo), 
           nombre = IFNULL(?, nombre), 
           apellidop = IFNULL(?, apellidop), 
@@ -262,7 +265,7 @@ export const getUser = async (req, res) => {
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Usuario no encontrado" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, fecha_creacion FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
         id,
       ]);
   
@@ -291,16 +294,25 @@ export const getUser = async (req, res) => {
     }
   };
 
+  // Obtener los datos de la sesión 
   export const getUserByCorreo = async (req, res) => {
     console.log("CONSULTANDO: ")
     try {
       const {correo } = req.params;
       console.log("Se recibe correo: " + correo)
       //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, nombre FROM usuarios WHERE correo = ?", [  
-        correo,
-      ]);
-  
+      const [rows] = await pool.query(`
+      SELECT 
+        BIN_TO_UUID(id) id, 
+        correo, 
+        llave, 
+        id_rol,
+        (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
+        nombre 
+      FROM usuarios 
+      WHERE correo = ?
+      `, [correo]);
+      console.log("Rol del usuario:: "+ rows[0].desc_rol)
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
       }
@@ -362,26 +374,27 @@ export const getUsersByIdUser = async (req, res) => {
       ROW_NUMBER() OVER (ORDER BY ${orderByClause}) AS contador,
       BIN_TO_UUID(u.id) AS id, 
       u.correo, 
-      u.llave, 
-      u.rol, 
+      u.llave,
+      r.descripcion AS desc_rol,
       t.descripcion AS titulo, 
       u.nombre, 
       u.apellidop, 
       u.apellidom, 
-      e.descripcion AS especialidad,  -- Usar la descripción en lugar del UUID
+      e.descripcion AS especialidad,  
       u.telefono, 
       u.fecha_creacion AS fecha_creacion,
       BIN_TO_UUID(id_usuario) id_usuario,  
       (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
+    LEFT JOIN cat_roles r ON u.id_rol = r.id
     LEFT JOIN cat_titulos t ON u.id_titulo = t.id
     LEFT JOIN cat_especialidades e ON u.id_especialidad = e.id
-    WHERE BIN_TO_UUID(u.id_usuario) = ?  -- Agrega esta cláusula WHERE
+    WHERE BIN_TO_UUID(u.id_usuario) = ? 
     ORDER BY ${orderByClause}
     LIMIT ? OFFSET ?
     `, [id, +size, +offset]);
-
+    console.log([rows])
     const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios WHERE BIN_TO_UUID(id_usuario) = ?', [id]);
     const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
     const totalElements = +totalPagesData[0]?.count;
@@ -394,12 +407,12 @@ export const getUsersByIdUser = async (req, res) => {
         id: response.id,
         correo: response.correo,
         llave: response.lave,
-        rol: response.rol,
-        titulo: response.titulo,
+        desc_rol: response.desc_rol,
+        desc_titulo: response.titulo,
         nombre: response.nombre,
         apellidop: response.apellidop,
         apellidom: response.apellidom,
-        especialidad: response.especialidad,
+        desc_especialidad: response.especialidad,
         telefono: response.telefono,
         fecha_creacion: fecha_formateada,
         id_usuario: response.id_usuario,
@@ -426,6 +439,29 @@ export const getUsersByIdUser = async (req, res) => {
   }
 };
 
+export const updateUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { llave } = req.body;
+    const llave_status=1
+
+    const [result] = await pool.query(
+      "UPDATE usuarios SET llave = IFNULL(?, llave), llave_status = IFNULL(?, llave_status) WHERE BIN_TO_UUID(id) = ?",
+      [llave, llave_status, id]
+    );
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
+      id,
+    ]);
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Ocurrió un error al actualizar la contraseña" });
+  }
+};
 
 
   

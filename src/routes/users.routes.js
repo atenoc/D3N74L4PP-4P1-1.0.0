@@ -8,7 +8,8 @@ import {
   updateUser,
   deleteUser,
   getUserByCorreo,
-  getUsersByIdUser
+  getUsersByIdUser,
+  updateUserPassword
   
 } from "../controllers/users.controller.js";
 
@@ -37,5 +38,7 @@ router.get(path+"/usuarioxcorreo/:correo", verificarToken, getUserByCorreo)
 // GET All By
 router.get(path+"/usuario/:id", verificarToken, getUsersByIdUser);
 
+// PATCH One
+router.patch(path+"/passwordusuario/:id", verificarToken, updateUserPassword);
 
 export default router;

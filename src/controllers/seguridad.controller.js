@@ -8,7 +8,7 @@ export const login = async (req, res) => {
 
         const { correo, llave } =  req.body
         //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ? AND llave = ?", [
-          const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, rol, fecha_creacion FROM usuarios WHERE correo = ? AND llave = ? ", [
+          const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, fecha_creacion FROM usuarios WHERE correo = ? AND llave = ? ", [
             correo, llave
         ]);
 
@@ -24,7 +24,7 @@ export const login = async (req, res) => {
         }
 
     } catch (error) {
-        //console.log(error)
+        console.log(error)
         return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (login)" });
     }
 }
