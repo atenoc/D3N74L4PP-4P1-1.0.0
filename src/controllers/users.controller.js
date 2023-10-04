@@ -308,7 +308,8 @@ export const getUser = async (req, res) => {
         llave, 
         id_rol,
         (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
-        nombre 
+        nombre,
+        llave_status 
       FROM usuarios 
       WHERE correo = ?
       `, [correo]);
