@@ -303,17 +303,11 @@ export const getUser = async (req, res) => {
       //const [rows] = await pool.query("SELECT * FROM usuarios WHERE correo = ?", [
       const [rows] = await pool.query(`
       SELECT 
-        BIN_TO_UUID(id) id, 
-        correo, 
-        llave, 
-        id_rol,
-        (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
-        nombre,
-        llave_status 
+        BIN_TO_UUID(id) id
       FROM usuarios 
       WHERE correo = ?
       `, [correo]);
-      console.log("Rol del usuario:: "+ rows[0].desc_rol)
+
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
       }
@@ -324,6 +318,47 @@ export const getUser = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por correo)" });
     }
   };
+
+  export const getUserById = async (req, res) => {
+    try {
+      const {id} = req.params;
+      console.log("Se recibe id: " + id)
+
+      const [rows] = await pool.query(`
+      SELECT 
+          BIN_TO_UUID(id) id, 
+          correo, 
+          llave, 
+          BIN_TO_UUID(id_rol)id_rol,
+          (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
+          BIN_TO_UUID(id_titulo)id_titulo,
+          (SELECT descripcion FROM cat_titulos WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_titulo)) AS desc_titulo, 
+          nombre, 
+          apellidop, 
+          apellidom, 
+          BIN_TO_UUID(id_especialidad)id_especialidad,
+          (SELECT descripcion FROM cat_especialidades WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_especialidad)) AS desc_especialidad, 
+          telefono, 
+          DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
+          BIN_TO_UUID(id_usuario)id_usuario, 
+          BIN_TO_UUID(id_clinica)id_clinica 
+        FROM usuarios 
+        WHERE BIN_TO_UUID(id) = ?
+      `, [id]);
+
+      if (rows.length <= 0) {
+        return res.status(404).json({ message: "Usuario no encontrado (por id)" });
+      }
+      console.log("Usuario obtenido por id...")
+      console.log(rows[0])
+  
+      res.json(rows[0]);
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por id)" });
+    }
+  };
+
 /*
   export const getUsersByIdUser = async (req, res) => {
     try {
