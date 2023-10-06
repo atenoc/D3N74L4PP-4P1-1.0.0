@@ -118,6 +118,7 @@ export const getUsers = async (req, res) => {
   }
 };
 
+// old (deprecated)
 export const getUsersPagination = async (req, res) => {
   try {
     const { page, size, orderBy, way } = req.query;
@@ -213,14 +214,14 @@ export const getUser = async (req, res) => {
           correo, 
           llave, 
           BIN_TO_UUID(id_rol)id_rol,
-            (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
+          (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
           BIN_TO_UUID(id_titulo)id_titulo,
-            (SELECT descripcion FROM cat_titulos WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_titulo)) AS descripcion_titulo, 
+          (SELECT descripcion FROM cat_titulos WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_titulo)) AS desc_titulo, 
           nombre, 
           apellidop, 
           apellidom, 
           BIN_TO_UUID(id_especialidad)id_especialidad,
-            (SELECT descripcion FROM cat_especialidades WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_especialidad)) AS descripcion_especialidad, 
+          (SELECT descripcion FROM cat_especialidades WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_especialidad)) AS desc_especialidad, 
           telefono, 
           DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
           BIN_TO_UUID(id_usuario)id_usuario, 
@@ -294,7 +295,7 @@ export const getUser = async (req, res) => {
     }
   };
 
-  // Obtener los datos de la sesión 
+  // Obtener id del Usuario por Correo
   export const getUserByCorreo = async (req, res) => {
     console.log("CONSULTANDO: ")
     try {
@@ -319,6 +320,7 @@ export const getUser = async (req, res) => {
     }
   };
 
+  // Obtener Usuario por id_usuario
   export const getUserById = async (req, res) => {
     try {
       const {id} = req.params;
@@ -389,6 +391,7 @@ export const getUser = async (req, res) => {
   };
 */
 
+// Obtener Usuarios por id_usuario
 export const getUsersByIdUser = async (req, res) => {
   const { id } = req.params;
   try {
@@ -475,6 +478,7 @@ export const getUsersByIdUser = async (req, res) => {
   }
 };
 
+// actualizar contraseña
 export const updateUserPassword = async (req, res) => {
   try {
     const { id } = req.params;
