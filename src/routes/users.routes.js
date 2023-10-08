@@ -8,6 +8,7 @@ import {
   updateUser,
   deleteUser,
   getUserByCorreo,
+  getUserByIdUserAndCorreo,
   getUserById,
   getUsersByIdUser,
   updateUserPassword
@@ -35,6 +36,9 @@ router.delete(path+"/:id", verificarToken, deleteUser);
 
 // GET One By
 router.get(path+"/usuarioxcorreo/:correo", verificarToken, getUserByCorreo)
+
+// GET One By
+router.get(path+"/usuario/:id/:correo", verificarToken, getUserByIdUserAndCorreo)
 
 // GET One By
 router.get(path+"/usuarioxid/:id", verificarToken, getUserById)

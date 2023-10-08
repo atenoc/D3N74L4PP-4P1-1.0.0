@@ -320,6 +320,34 @@ export const getUser = async (req, res) => {
     }
   };
 
+  // Obtener Usuario por Id_usuario/Correo
+  export const getUserByIdUserAndCorreo = async (req, res) => {
+    try {
+      const {id, correo } = req.params;
+      console.log("id: " + id +" - correo: "+correo)
+      const [rows] = await pool.query(`
+      SELECT 
+        BIN_TO_UUID(id) id,
+        correo,
+        (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol,
+        nombre 
+      FROM usuarios 
+      WHERE BIN_TO_UUID(id) = ?
+      AND correo = ?
+      `, [id, correo]);
+
+      if (rows.length <= 0) {
+        return res.status(404).json({ message: "Usuario no encontrado (por id/correo)" });
+      }
+      console.log("US")
+      console.log(rows)
+      res.json(rows[0]);
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por id/correo)" });
+    }
+  };
+
   // Obtener Usuario por id_usuario
   export const getUserById = async (req, res) => {
     try {
@@ -351,8 +379,8 @@ export const getUser = async (req, res) => {
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado (por id)" });
       }
-      console.log("Usuario obtenido por id...")
-      console.log(rows[0])
+      //console.log("Usuario obtenido por id...")
+      //console.log(rows[0])
   
       res.json(rows[0]);
     } catch (error) {
