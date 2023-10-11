@@ -223,7 +223,8 @@ export const getUser = async (req, res) => {
           BIN_TO_UUID(id_especialidad)id_especialidad,
           (SELECT descripcion FROM cat_especialidades WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_especialidad)) AS desc_especialidad, 
           telefono, 
-          DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
+          DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
+          llave_status, 
           BIN_TO_UUID(id_usuario)id_usuario, 
           BIN_TO_UUID(id_clinica)id_clinica 
         FROM usuarios 
@@ -419,7 +420,7 @@ export const getUser = async (req, res) => {
   };
 */
 
-// Obtener Usuarios por id_usuario
+// Obtener Usuarios Paginados por id_usuario
 export const getUsersByIdUser = async (req, res) => {
   const { id } = req.params;
   try {
