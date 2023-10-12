@@ -137,7 +137,7 @@ export const deleteCentro = async (req, res) => {
 export const getCentroByIdUsuario = async (req, res) => {
   try {
     const { id_usuario } = req.params;
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    console.log("Centros | getCentroByIdUsuario | id: " +id_usuario)
     const [rows] = await pool.query(`
     SELECT 
       BIN_TO_UUID(id) id, 
@@ -154,24 +154,12 @@ export const getCentroByIdUsuario = async (req, res) => {
 
     if (rows.length <= 0) {
       console.log("Centro no encontrado (por id_usuario)")
-      //return res.status(404).json({ message: "Centro no encontrado" });
-      // Se retorna un json con los datos del centro en vacio, para no mostrar el error del 404 en consola
-      return res.json(
-        { 
-          "id":0,
-          "nombre":" ",
-          "telefono":"",
-          "correo":" ",
-          "direccion":" ",
-          "fecha_creacion":" ",
-          "id_usuario":id_usuario
-        }
-      );
+      return res.status(404).json({ message: "Centro no encontrado por id Usuario" });
     }
 
     res.json(rows[0]);
   } catch (error) {
-    //console.log(error)
+    console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener el centro (por id_usuario)" });
   }
 };
