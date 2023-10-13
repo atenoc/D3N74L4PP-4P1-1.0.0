@@ -154,19 +154,7 @@ export const getCentroByIdUsuario = async (req, res) => {
 
     if (rows.length <= 0) {
       console.log("Centro no encontrado (por id_usuario)")
-      //return res.status(404).json({ message: "Centro no encontrado" });
-      // Se retorna un json con los datos del centro en vacio, para no mostrar el error del 404 en consola
-      return res.json(
-        { 
-          "id":0,
-          "nombre":" ",
-          "telefono":"",
-          "correo":" ",
-          "direccion":" ",
-          "fecha_creacion":" ",
-          "id_usuario":id_usuario
-        }
-      );
+      return res.status(404).json({ message: "Centro no encontrado (por id_usuario)" });
     }
 
     res.json(rows[0]);
