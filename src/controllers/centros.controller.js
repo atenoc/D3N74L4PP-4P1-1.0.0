@@ -137,7 +137,7 @@ export const deleteCentro = async (req, res) => {
 export const getCentroByIdUsuario = async (req, res) => {
   try {
     const { id_usuario } = req.params;
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    console.log("Centros | getCentroByIdUsuario | id: " +id_usuario)
     const [rows] = await pool.query(`
     SELECT 
       BIN_TO_UUID(id) id, 
@@ -159,7 +159,7 @@ export const getCentroByIdUsuario = async (req, res) => {
 
     res.json(rows[0]);
   } catch (error) {
-    //console.log(error)
+    console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener el centro (por id_usuario)" });
   }
 };
