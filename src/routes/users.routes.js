@@ -6,6 +6,7 @@ import {
   getUsersPagination,
   createUser,
   updateUser,
+  updateUserRegister,
   deleteUser,
   getUserByCorreo,
   getUserByIdUserAndCorreo,
@@ -30,6 +31,7 @@ router.get(path+"/:id", verificarToken, getUser);
 
 // PATCH One
 router.patch(path+"/:id", verificarToken, updateUser);
+router.patch(path+"/usuario/:id", verificarToken, updateUserRegister);
 
 // DELETE One
 router.delete(path+"/:id", verificarToken, deleteUser);

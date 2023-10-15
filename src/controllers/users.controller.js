@@ -267,14 +267,40 @@ export const getUser = async (req, res) => {
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Usuario no encontrado" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, fecha_creacion FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
-        id,
-      ]);
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, fecha_creacion FROM usuarios WHERE BIN_TO_UUID(id) = ?"
+        , [id]);
   
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al actualizar la información del usuario" });
+    }
+  };
+
+  export const updateUserRegister = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { nombre, apellidop } = req.body;
+  
+      const [result] = await pool.query(
+        `UPDATE usuarios 
+          SET 
+          nombre = IFNULL(?, nombre), 
+          apellidop = IFNULL(?, apellidop)
+        WHERE 
+          BIN_TO_UUID(id) = ?`,
+        [nombre, apellidop, id]
+      );
+  
+      if (result.affectedRows === 0)
+        return res.status(404).json({ message: "Usuario no encontrado para actualizar, register"});
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id FROM usuarios WHERE BIN_TO_UUID(id) = ?"
+        ,[id]);
+  
+      res.json(rows[0]);
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al actualizar la información del usuario, register" });
     }
   };
 
@@ -321,7 +347,7 @@ export const getUser = async (req, res) => {
     }
   };
 
-  // Obtener Usuario por Id_usuario/Correo
+  // validarUsuarioActivo - id usuario / correo
   export const getUserByIdUserAndCorreo = async (req, res) => {
     try {
       const {id, correo } = req.params;
@@ -331,7 +357,8 @@ export const getUser = async (req, res) => {
         BIN_TO_UUID(id) id,
         correo,
         (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol,
-        nombre 
+        nombre,
+        apellidop 
       FROM usuarios 
       WHERE BIN_TO_UUID(id) = ?
       AND correo = ?
