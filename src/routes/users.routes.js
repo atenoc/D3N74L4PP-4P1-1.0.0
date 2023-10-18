@@ -3,15 +3,14 @@ import { verificarToken } from "../controllers/verificarToken.js";
 import {
   getUser,
   getUsers,
-  getUsersPagination,
+  //getUsersPagination,
   createUser,
   updateUser,
   updateUserRegister,
   deleteUser,
   getUserByCorreo,
   getUserByIdUserAndCorreo,
-  getUserById,
-  getUsersByIdUser,
+  getUsersPaginationByIdUser,
   updateUserPassword
   
 } from "../controllers/users.controller.js";
@@ -24,9 +23,6 @@ router.post(path, verificarToken, createUser);
 
 // GET All
 router.get(path, verificarToken, getUsers);
-router.get(path+"/pagination", verificarToken, getUsersPagination);
-
-// GET One
 router.get(path+"/:id", verificarToken, getUser);
 
 // PATCH One
@@ -37,18 +33,11 @@ router.patch(path+"/usuario/:id", verificarToken, updateUserRegister);
 router.delete(path+"/:id", verificarToken, deleteUser);
 
 // GET One By
-router.get(path+"/usuarioxcorreo/:correo", verificarToken, getUserByCorreo)
-
-// GET One By
-router.get(path+"/usuario/:id/:correo", verificarToken, getUserByIdUserAndCorreo)
-
-// GET One By
-router.get(path+"/usuarioxid/:id", verificarToken, getUserById)
-
-// GET All By
-router.get(path+"/usuario/:id", verificarToken, getUsersByIdUser);
+router.get(path+"/usuario/correo/:correo", verificarToken, getUserByCorreo) // After Login
+router.get(path+"/usuario/:id/correo/:correo", verificarToken, getUserByIdUserAndCorreo) // After Login 2
+router.get(path+"/paginacion/usuario/:id", verificarToken, getUsersPaginationByIdUser);
 
 // PATCH One
-router.patch(path+"/passwordusuario/:id", verificarToken, updateUserPassword);
+router.patch(path+"/password/usuario/:id", verificarToken, updateUserPassword);
 
 export default router;
