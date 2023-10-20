@@ -404,25 +404,4 @@ export const updateUserPassword = async (req, res) => {
     return res.status(500).json({ message: "Ocurrió un error al actualizar la contraseña" });
   }
 };
-
-
-  
-      const [result] = await pool.query(
-        "UPDATE usuarios SET llave = IFNULL(?, llave), llave_status = IFNULL(?, llave_status) WHERE BIN_TO_UUID(id) = ?",
-        [llave, llave_status, id]
-      );
-  
-      if (result.affectedRows === 0)
-        return res.status(404).json({ message: "Usuario no encontrado" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo FROM usuarios WHERE BIN_TO_UUID(id) = ?", [
-        id,
-      ]);
-  
-      res.json(rows[0]);
-    } catch (error) {
-      //console.log(error)
-      return res.status(500).json({ message: "Ocurrió un error al actualizar la contraseña" });
-    }
-  };
-
   
