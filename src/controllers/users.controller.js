@@ -68,13 +68,12 @@ export const getUsers = async (req, res) => {
       ROW_NUMBER() OVER (ORDER BY u.autoincremental DESC) AS contador,
       BIN_TO_UUID(u.id) AS id, 
       u.correo, 
-      u.llave, 
       u.rol, 
-      t.descripcion AS titulo, 
+      t.titulo, 
       u.nombre, 
       u.apellidop, 
       u.apellidom, 
-      e.descripcion AS especialidad,  -- Usar la descripción en lugar del UUID
+      e.especialidad,  
       u.telefono, 
       DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
       BIN_TO_UUID(id_usuario)id_usuario,  
@@ -115,13 +114,12 @@ export const getUsersPaginationByIdUser = async (req, res) => {
       ROW_NUMBER() OVER (ORDER BY ${orderByClause}) AS contador,
       BIN_TO_UUID(u.id) AS id, 
       u.correo, 
-  
-      r.descripcion2 AS desc_rol,
-      t.descripcion AS titulo, 
+      r.descripcion AS desc_rol,
+      t.titulo AS titulo, 
       u.nombre, 
       u.apellidop, 
       u.apellidom, 
-      e.descripcion AS especialidad,  
+      e.especialidad AS especialidad,  
       u.telefono, 
       DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
       BIN_TO_UUID(id_usuario) id_usuario,  
@@ -167,15 +165,15 @@ export const getUser = async (req, res) => {
           correo, 
           llave, 
           BIN_TO_UUID(id_rol)id_rol,
-          (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol, 
-          (SELECT descripcion2 FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
+          (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol, 
+          (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
           id_titulo,
-          (SELECT descripcion FROM cat_titulos WHERE id = id_titulo) AS desc_titulo, 
+          (SELECT titulo FROM cat_titulos WHERE id = id_titulo) AS titulo, 
           nombre, 
           apellidop, 
           apellidom, 
           id_especialidad,
-          (SELECT descripcion FROM cat_especialidades WHERE id = id_especialidad) AS especialidad, 
+          (SELECT especialidad FROM cat_especialidades WHERE id = id_especialidad) AS especialidad, 
           telefono, 
           DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
           llave_status, 
@@ -201,13 +199,12 @@ export const getUser = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono } = req.body;
+      const { correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono } = req.body;
   
       const [result] = await pool.query(
         `UPDATE usuarios 
           SET 
           correo = IFNULL(?, correo), 
-          llave = IFNULL(?, llave), 
           id_rol = IFNULL(UUID_TO_BIN(?), id_rol), 
           id_titulo = IFNULL(?, id_titulo), 
           nombre = IFNULL(?, nombre), 
@@ -217,7 +214,7 @@ export const getUser = async (req, res) => {
           telefono = IFNULL(?, telefono) 
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id]
+        [correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id]
       );
   
       if (result.affectedRows === 0)
@@ -314,7 +311,7 @@ export const getUser = async (req, res) => {
       SELECT 
         BIN_TO_UUID(id) id,
         correo,
-        (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
+        (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
         nombre,
         apellidop 
       FROM usuarios 

@@ -9,17 +9,17 @@ export const getRoles = async (req, res) => {
       console.log("id Rol: "+roles[0].id_rol)
       var id_rol = roles[0].id_rol
 
-      const [desc] = await pool.execute("SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = ?", [id_rol]);
-      console.log("Desc Rol: "+ desc[0].descripcion)
-      var descRol = desc[0].descripcion
+      const [desc] = await pool.execute("SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = ?", [id_rol]);
+      console.log("Desc Rol: "+ desc[0].rol)
+      var descRol = desc[0].rol
 
       let rows; 
 
       if (descRol == "admin") {
-        const [adminRows] = await pool.query("SELECT BIN_TO_UUID(id) id, descripcion, descripcion2 FROM cat_roles WHERE descripcion != 'sop' ORDER BY autoincremental");
+        const [adminRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles WHERE rol != 'sop' ORDER BY autoincremental");
         rows = adminRows;
       } else if ((descRol == "sop")){
-        const [userRows] = await pool.query("SELECT BIN_TO_UUID(id) id, descripcion, descripcion2 FROM cat_roles ORDER BY autoincremental");
+        const [userRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles ORDER BY autoincremental");
         rows = userRows;
       }
 
@@ -32,7 +32,7 @@ export const getRoles = async (req, res) => {
 
 export const getTitulos = async (req, res) => {
     try {
-      const [rows] = await pool.query("SELECT id, descripcion, descripcion2  FROM cat_titulos ORDER BY autoincremental");
+      const [rows] = await pool.query("SELECT id, titulo, descripcion FROM cat_titulos ORDER BY autoincremental");
       res.json(rows);
     } catch (error) {
       console.log("getTitulos:: "+ error)
@@ -42,7 +42,7 @@ export const getTitulos = async (req, res) => {
 
 export const getEspecialidades = async (req, res) => {
     try {
-      const [rows] = await pool.query("SELECT id, descripcion FROM cat_especialidades ORDER BY autoincremental");
+      const [rows] = await pool.query("SELECT id, especialidad FROM cat_especialidades ORDER BY autoincremental");
       res.json(rows);
     } catch (error) {
       console.log("getEspecialidades:: "+ error)
