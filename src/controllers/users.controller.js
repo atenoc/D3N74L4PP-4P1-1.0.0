@@ -285,7 +285,9 @@ export const getUser = async (req, res) => {
       const {correo } = req.params;
       const [rows] = await pool.query(`
       SELECT 
-        BIN_TO_UUID(id) id
+        BIN_TO_UUID(id) id,
+        id_rol,
+        (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol
       FROM usuarios 
       WHERE correo = ?
       `, [correo]);

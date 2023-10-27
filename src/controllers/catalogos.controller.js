@@ -15,12 +15,15 @@ export const getRoles = async (req, res) => {
 
       let rows; 
 
-      if (descRol == "admin") {
-        const [adminRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles WHERE rol != 'sop' ORDER BY autoincremental");
-        rows = adminRows;
+      if (descRol == "suadmin") {
+        const [suadminRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles WHERE rol != 'sop' ORDER BY autoincremental");
+        rows = suadminRows;
       } else if ((descRol == "sop")){
         const [userRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles ORDER BY autoincremental");
         rows = userRows;
+      } else if (descRol == "adminn1") {
+        const [suadminRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles WHERE rol != 'sop' AND rol != 'suadmin' AND rol != 'adminn1'  ORDER BY autoincremental");
+        rows = suadminRows;
       }
 
       res.json(rows);
