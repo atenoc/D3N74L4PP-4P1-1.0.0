@@ -11,6 +11,7 @@ import {
   getUserByCorreo,
   getUserByIdUserAndCorreo,
   getUsersPaginationByIdUser,
+  getUsersPaginationByIdClinica,
   updateUserPassword
   
 } from "../controllers/users.controller.js";
@@ -36,6 +37,7 @@ router.delete(path+"/:id", verificarToken, deleteUser);
 router.get(path+"/usuario/correo/:correo", verificarToken, getUserByCorreo) // After Login
 router.get(path+"/usuario/:id/correo/:correo", verificarToken, getUserByIdUserAndCorreo) // After Login 2
 router.get(path+"/paginacion/usuario/:id", verificarToken, getUsersPaginationByIdUser);
+router.get(path+"/paginacion/clinica/:id_clinica", verificarToken, getUsersPaginationByIdClinica);
 
 // PATCH One
 router.patch(path+"/password/usuario/:id", verificarToken, updateUserPassword);

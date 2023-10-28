@@ -4,23 +4,13 @@ import { esUUID } from "../utils/validacionUUID.js";
 
 const fecha_hoy = new Date();
 var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
-var id_clinica
+
 
 export const createUser = async (req, res) => {
   try {
     //console.log(req.body)
-    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario} = req.body;
+    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_clinica} = req.body;
     const llave_estatus = 0;
-
-    //Consultamos el id de la clínica del usuario
-    const [clinicas] = await pool.query(`SELECT BIN_TO_UUID(id) id FROM clinicas WHERE BIN_TO_UUID(id_usuario) = ?`,[id_usuario]);
-    if (clinicas.length > 0 && clinicas[0].id) {
-      id_clinica = clinicas[0].id;
-      //console.log("id_clinica:", id_clinica);
-    } else {
-      console.log("createUser --> No se encontró ninguna clínica para el ID de usuario:", id_usuario);
-      return res.status(500).json({ message: "No tiene registrado su clínica/consultorio dental. " });
-    }
 
     //comprobar si los parámetros son UUID / caso contrario insertarlos como null
     //const tituloUUID = esUUID(titulo) ? titulo : null;
@@ -38,7 +28,7 @@ export const createUser = async (req, res) => {
     const [result] = await pool.execute(`
       INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
       VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
-      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica]
+      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica || null]
     );
 
     if (result.affectedRows === 1) {
@@ -153,6 +143,68 @@ export const getUsersPaginationByIdUser = async (req, res) => {
   }
 };
 
+// Obtener Usuarios Paginados por id_clinica
+export const getUsersPaginationByIdClinica = async (req, res) => {
+  const { id_clinica } = req.params;
+  try {
+    const { page, size, orderBy, way } = req.query;
+    console.log("page: " + page);
+    console.log("size: " + size);
+    console.log("orderBy: " + orderBy);
+    console.log("modeOrder: " + way);
+    const offset = (page - 1) * size;
+
+    let orderByClause = "u.autoincremental DESC"; // Orden predeterminado
+    if (orderBy && way) {
+      // Verificar si se proporcionaron orderBy y modeOrder
+      orderByClause = `${"u." + orderBy} ${way}`;
+    }
+
+    const [rows] = await pool.query(`
+    SELECT 
+      ROW_NUMBER() OVER (ORDER BY ${orderByClause}) AS contador,
+      BIN_TO_UUID(u.id) AS id, 
+      u.correo, 
+      r.descripcion AS desc_rol,
+      t.titulo AS titulo, 
+      u.nombre, 
+      u.apellidop, 
+      u.apellidom, 
+      e.especialidad AS especialidad,  
+      u.telefono, 
+      DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
+      BIN_TO_UUID(id_usuario) id_usuario,  
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+      BIN_TO_UUID(u.id_clinica) AS id_clinica 
+    FROM usuarios u
+    LEFT JOIN cat_roles r ON u.id_rol = r.id
+    LEFT JOIN cat_titulos t ON u.id_titulo = t.id
+    LEFT JOIN cat_especialidades e ON u.id_especialidad = e.id
+    WHERE BIN_TO_UUID(u.id_clinica) = ?
+    AND r.rol != 'suadmin' 
+    ORDER BY ${orderByClause}
+    LIMIT ? OFFSET ?
+    `, [id_clinica, +size, +offset]);
+    console.log([rows])
+    const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios WHERE BIN_TO_UUID(id_clinica) = ?', [id_clinica]);
+    const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
+    const totalElements = +totalPagesData[0]?.count;
+
+    res.json({
+      data: rows,
+      pagination: {
+        page: +page,
+        size: +size,
+        totalPages,
+        totalElements: totalElements-1
+      }
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios (por id_clinica)" });
+  }
+};
+
 
 // Obtener usuario por id
 export const getUser = async (req, res) => {
@@ -186,7 +238,7 @@ export const getUser = async (req, res) => {
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-      console.log(rows[0])
+      //console.log(rows[0])
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
@@ -286,8 +338,9 @@ export const getUser = async (req, res) => {
       const [rows] = await pool.query(`
       SELECT 
         BIN_TO_UUID(id) id,
-        id_rol,
-        (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol
+        BIN_TO_UUID(id_rol) id_rol,
+        (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
+        BIN_TO_UUID(id_clinica) id_clinica
       FROM usuarios 
       WHERE correo = ?
       `, [correo]);
@@ -295,7 +348,7 @@ export const getUser = async (req, res) => {
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
       }
-  
+      console.log(rows)
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
