@@ -127,6 +127,7 @@ export const deleteCentro = async (req, res) => {
     }
 };
 
+// For login / validar si el usuario tiene registradada una clinica
 export const getCentroByIdUsuario = async (req, res) => {
   try {
     //console.log(req.body)

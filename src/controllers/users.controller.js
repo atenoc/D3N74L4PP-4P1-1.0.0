@@ -196,7 +196,7 @@ export const getUsersPaginationByIdClinica = async (req, res) => {
         page: +page,
         size: +size,
         totalPages,
-        totalElements: totalElements-1
+        totalElements
       }
     })
   } catch (error) {
