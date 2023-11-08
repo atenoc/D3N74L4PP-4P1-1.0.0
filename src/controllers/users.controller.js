@@ -286,16 +286,17 @@ export const getUser = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { nombre, apellidop } = req.body;
+      const { nombre, apellidop, id_clinica } = req.body;
   
       const [result] = await pool.query(
         `UPDATE usuarios 
           SET 
           nombre = IFNULL(?, nombre), 
-          apellidop = IFNULL(?, apellidop)
+          apellidop = IFNULL(?, apellidop),
+          id_clinica = IFNULL(UUID_TO_BIN(?), id_clinica) 
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [nombre, apellidop, id]
+        [nombre, apellidop, id_clinica, id]
       );
   
       if (result.affectedRows === 0)
