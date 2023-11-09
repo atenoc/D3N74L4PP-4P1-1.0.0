@@ -1,6 +1,7 @@
 import { pool } from "../db.js";
 import  moment  from "moment";
 import { esUUID } from "../utils/validacionUUID.js";
+import bcrypt from "bcrypt";
 
 const fecha_hoy = new Date();
 var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
@@ -24,11 +25,14 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ message: "400" });
     }
 
+    const hashedPassword = await bcrypt.hash(llave, 10);
+    console.log("hashedPassword:: "+ hashedPassword)
+
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(`
       INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
       VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
-      [correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica || null]
+      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica || null]
     );
 
     if (result.affectedRows === 1) {
@@ -215,7 +219,6 @@ export const getUser = async (req, res) => {
         SELECT 
           BIN_TO_UUID(id) id, 
           correo, 
-          llave, 
           BIN_TO_UUID(id_rol)id_rol,
           (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol, 
           (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
