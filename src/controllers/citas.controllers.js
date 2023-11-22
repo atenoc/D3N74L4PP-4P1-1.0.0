@@ -12,9 +12,9 @@ export const createCita = async (req, res) => {
       const id_tipo_pago='TP_PG_NA'
 
       const [result] = await pool.query(`
-        INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_clinica, id_usuario, fecha_creacion) 
-        VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)
-        `,[titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago,id_tipo_pago, id_clinica, id_usuario, fecha_creacion]
+        INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_paciente, id_clinica, id_usuario, fecha_creacion) 
+        VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)
+        `,[titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago,id_tipo_pago, id_paciente, id_clinica, id_usuario, fecha_creacion]
       );
 
       if (result.affectedRows === 1) {
