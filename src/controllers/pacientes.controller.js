@@ -17,9 +17,9 @@ export const createPaciente = async (req, res) => {
         console.log("Paciente registrado")
       }
   
-      const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM pacientes WHERE nombre = ? AND apellidop = ?", [nombre, apellidop]);
+      const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM pacientes WHERE nombre = ? AND apellidop = ? AND BIN_TO_UUID(id_usuario) = ? AND BIN_TO_UUID(id_clinica) = ? AND fecha_creacion = ?", [nombre, apellidop, id_usuario, id_clinica, fecha_creacion]);
       if (!idResult.length) {
-        return res.status(500).json({ message: "No se encontró el ID del usuario insertado" });
+        return res.status(500).json({ message: "No se encontró el ID del paciente insertado" });
       }
       const { id } = idResult[0];
   
