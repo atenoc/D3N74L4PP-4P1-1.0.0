@@ -87,3 +87,34 @@ export const getPacientesPaginationByIdClinica = async (req, res) => {
     return res.status(500).json({ message: "Ocurrió un error al obtener los pacientes (por id_clinica)" });
   }
 };
+
+
+export const getPacientesBuscadorByIdClinica = async (req, res) => {
+
+  console.log("Buscando...");
+
+  const { id_clinica } = req.params;
+  const { query } = req.body;
+
+  console.log("Query: "+query);
+
+  try {
+    if(query.length > 0){
+      const [rows] = await pool.query(`
+      SELECT 
+        BIN_TO_UUID(id) AS id, 
+        nombre, apellidop, apellidom
+      FROM pacientes
+      WHERE BIN_TO_UUID(id_clinica) = ? 
+        AND (nombre LIKE ? OR apellidop LIKE ? OR apellidom LIKE ?)
+      `, [id_clinica, `%${query}%`, `%${query}%`, `%${query}%`]);
+      res.json(rows);
+    }else{
+      res.json({});
+    }
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Ocurrió un error al obtener buscar..." });
+  }
+};
