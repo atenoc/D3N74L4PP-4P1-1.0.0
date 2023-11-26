@@ -82,3 +82,20 @@ export const createCita = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al obtener las citas" });
     }
   };
+
+
+  export const deleteCita = async (req, res) => {
+    try {
+      //console.log(req.body)
+      const { id } = req.params;
+      const [rows] = await pool.query("DELETE FROM citas WHERE id = uuid_to_bin(?)", [id]);
+      if (rows.affectedRows <= 0) {
+        return res.status(404).json({ message: "Cita no encontrada" });
+      }
+  
+      res.json({id});
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al eliminar la cita" });
+    }
+  };
