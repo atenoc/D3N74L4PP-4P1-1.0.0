@@ -66,6 +66,9 @@ export const createCita = async (req, res) => {
         end: moment(cita.fecha_hora_fin).toDate(), // Convierte la cadena a objeto Date
         backgroundColor: '#00a65a', //Success (green)
         borderColor    : '#00a65a', //Success (green)
+        //allDay: true,
+        classNames: ['fc-daygrid-dot-event', 'fc-daygrid-event', 'fc-event', 'fc-daygrid-day-events'],
+        //display: 'inverse-background',
         data: {
           id: cita.id,
           motivo: cita.motivo,
@@ -80,6 +83,41 @@ export const createCita = async (req, res) => {
     } catch (error) {
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al obtener las citas" });
+    }
+  };
+
+  export const getCitaById = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [rowsCitas] = await pool.query(`
+      SELECT 
+        BIN_TO_UUID(c.id) AS id,  
+        c.titulo,
+        DATE_FORMAT(c.fecha_hora_inicio, '%Y-%m-%d %H:%i:%s') AS start,
+        DATE_FORMAT(c.fecha_hora_fin, '%Y-%m-%d %H:%i:%s') AS end,
+        c.motivo,
+        p.nombre,
+        p.apellidop,
+        p.apellidom,
+        p.edad,
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario)) AS nombre_usuario_creador,
+        DATE_FORMAT(c.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion
+      FROM citas c
+      INNER JOIN pacientes p ON c.id_paciente = p.id
+      WHERE BIN_TO_UUID(c.id) = ? 
+      ORDER BY c.autoincremental DESC
+      `, [id]);
+
+      if (rowsCitas.length <= 0) {
+        return res.status(404).json({ message: "Cita no encontrada" });
+      }
+
+      console.log(rowsCitas[0])
+      res.json(rowsCitas[0]);
+  
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener las cita por id" });
     }
   };
 
