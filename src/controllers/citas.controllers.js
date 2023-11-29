@@ -100,6 +100,7 @@ export const createCita = async (req, res) => {
         p.apellidop,
         p.apellidom,
         p.edad,
+        p.telefono,
         BIN_TO_UUID(c.id_paciente) AS id_paciente,
         (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario)) AS nombre_usuario_creador,
         DATE_FORMAT(c.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion
@@ -113,7 +114,7 @@ export const createCita = async (req, res) => {
         return res.status(404).json({ message: "Cita no encontrada" });
       }
 
-      console.log(rowsCitas[0])
+      //console.log(rowsCitas[0])
       res.json(rowsCitas[0]);
   
     } catch (error) {
@@ -147,7 +148,7 @@ export const createCita = async (req, res) => {
         const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, titulo AS title FROM citas WHERE BIN_TO_UUID(id) = ?"
         ,[id]);
 
-      console.log(rows[0])
+      //console.log(rows[0])
       res.json(rows[0]);
     } catch (error) {
       console.log(error)

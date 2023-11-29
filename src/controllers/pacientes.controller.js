@@ -4,13 +4,13 @@ export const createPaciente = async (req, res) => {
     try {
         console.log("Paciente::")
       console.log(req.body)
-      const { nombre, apellidop, apellidom, edad, id_usuario, id_clinica, fecha_creacion} = req.body;
+      const { nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion} = req.body;
   
       // insertar el nuevo registro
       const [result] = await pool.execute(`
-        INSERT INTO pacientes (id, nombre, apellidop, apellidom, edad, id_usuario, id_clinica, fecha_creacion) 
-        VALUES (UUID_TO_BIN(UUID()),?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-        [nombre, apellidop, apellidom, edad, id_usuario, id_clinica, fecha_creacion]
+        INSERT INTO pacientes (id, nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion) 
+        VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
+        [nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion]
       );
   
       if (result.affectedRows === 1) {
@@ -23,7 +23,7 @@ export const createPaciente = async (req, res) => {
       }
       const { id } = idResult[0];
   
-      res.status(201).json({ id, nombre, apellidop, apellidom, edad, id_usuario, id_clinica, fecha_creacion });
+      res.status(201).json({ id, nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion });
       
     } catch (error) {
       console.log(error)
@@ -88,6 +88,41 @@ export const getPacientesPaginationByIdClinica = async (req, res) => {
   }
 };
 
+export const updatePaciente = async (req, res) => {
+  try {
+    //console.log(req.body)
+    const { id } = req.params;
+    const { nombre, apellidop, apellidom, edad, telefono, correo, direccion } = req.body;
+
+    const [result] = await pool.query(
+      `UPDATE pacientes 
+        SET 
+        nombre = IFNULL(?, nombre), 
+        apellidop = IFNULL(?, apellidop), 
+        apellidom = IFNULL(?, apellidom), 
+        edad = IFNULL(?, edad), 
+        telefono = IFNULL(?, telefono),
+        correo = IFNULL(?, correo), 
+        direccion = IFNULL(?, direccion) 
+      WHERE 
+        BIN_TO_UUID(id) = ?`,
+      [nombre, apellidop, apellidom, edad, telefono, correo, direccion, id]
+    );
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Paciente no encontrado" });
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, nombre, apellidop, apellidom FROM pacientes WHERE BIN_TO_UUID(id) = ?"
+      ,[id]);
+
+    console.log("Update Paciente: ")
+    console.log(rows[0])
+    res.json(rows[0]);
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Ocurrió un error al actualizar la información del paciente" });
+  }
+};
+
 
 export const getPacientesBuscadorByIdClinica = async (req, res) => {
 
@@ -103,7 +138,7 @@ export const getPacientesBuscadorByIdClinica = async (req, res) => {
       const [rows] = await pool.query(`
       SELECT 
         BIN_TO_UUID(id) AS id, 
-        nombre, apellidop, apellidom
+        nombre, apellidop, apellidom, edad, telefono
       FROM pacientes
       WHERE BIN_TO_UUID(id_clinica) = ? 
         AND (nombre LIKE ? OR apellidop LIKE ? OR apellidom LIKE ?)
