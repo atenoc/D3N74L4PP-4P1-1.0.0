@@ -144,7 +144,7 @@ export const createCita = async (req, res) => {
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Cita no encontrada" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM citas WHERE BIN_TO_UUID(id) = ?"
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, titulo AS title FROM citas WHERE BIN_TO_UUID(id) = ?"
         ,[id]);
 
       console.log(rows[0])
