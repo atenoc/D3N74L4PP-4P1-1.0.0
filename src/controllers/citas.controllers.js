@@ -67,7 +67,7 @@ export const createCita = async (req, res) => {
         backgroundColor: '#00a65a', //Success (green)
         borderColor    : '#00a65a', //Success (green)
         //allDay: true,
-        //classNames: ['fc-daygrid-dot-event', 'fc-daygrid-event', 'fc-event', 'fc-daygrid-day-events'],
+        classNames: ['cursor-pointer'],
         //display: 'inverse-background',
         data: {
           id: cita.id,
