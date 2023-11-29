@@ -100,6 +100,7 @@ export const createCita = async (req, res) => {
         p.apellidop,
         p.apellidom,
         p.edad,
+        BIN_TO_UUID(c.id_paciente) AS id_paciente,
         (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario)) AS nombre_usuario_creador,
         DATE_FORMAT(c.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion
       FROM citas c
@@ -118,6 +119,39 @@ export const createCita = async (req, res) => {
     } catch (error) {
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al obtener las cita por id" });
+    }
+  };
+
+  export const updateCita = async (req, res) => {
+    try {
+      //console.log(req.body)
+      const { id } = req.params;
+      const { title, motivo, start, end, nota, id_paciente } = req.body;
+
+      const [result] = await pool.query(
+        `UPDATE citas 
+          SET 
+          titulo = IFNULL(?, titulo), 
+          motivo = IFNULL(?, motivo), 
+          fecha_hora_inicio = IFNULL(?, fecha_hora_inicio), 
+          fecha_hora_fin = IFNULL(?, fecha_hora_fin), 
+          nota = IFNULL(?, nota),
+          id_paciente = IFNULL(UUID_TO_BIN(?), id_paciente)
+        WHERE 
+          BIN_TO_UUID(id) = ?`,
+        [title, motivo, start, end, nota, id_paciente, id]
+      );
+  
+      if (result.affectedRows === 0)
+        return res.status(404).json({ message: "Cita no encontrada" });
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM citas WHERE BIN_TO_UUID(id) = ?"
+        ,[id]);
+
+      console.log(rows[0])
+      res.json(rows[0]);
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al actualizar la cita" });
     }
   };
 
