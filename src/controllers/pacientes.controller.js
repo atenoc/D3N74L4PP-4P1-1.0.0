@@ -88,11 +88,44 @@ export const getPacientesPaginationByIdClinica = async (req, res) => {
   }
 };
 
-export const updatePaciente = async (req, res) => {
+export const getPacienteById = async (req, res) => {
   try {
     //console.log(req.body)
     const { id } = req.params;
-    const { nombre, apellidop, apellidom, edad, telefono, correo, direccion } = req.body;
+      const [rows] = await pool.query(`
+      SELECT 
+        BIN_TO_UUID(p.id) id, 
+        p.nombre, 
+        p.apellidop, 
+        p.apellidom,
+        p.edad,
+        p.id_sexo, 
+        p.telefono, 
+        p.correo,
+        p.direccion,
+        BIN_TO_UUID(id_usuario) id_usuario,  
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(p.id_usuario)) AS nombre_usuario_creador, 
+        DATE_FORMAT(p.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion
+      FROM pacientes p 
+      WHERE BIN_TO_UUID(p.id) = ?`
+      ,[id]);
+
+    if (rows.length <= 0) {
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+    console.log(rows[0])
+    res.json(rows[0]);
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Ocurrió un error al obtener el paciente" });
+  }
+};
+
+export const updatePacienteCita = async (req, res) => {
+  try {
+    //console.log(req.body)
+    const { id } = req.params;
+    const { nombre, apellidop, apellidom, edad, telefono} = req.body;
 
     const [result] = await pool.query(
       `UPDATE pacientes 
@@ -102,11 +135,9 @@ export const updatePaciente = async (req, res) => {
         apellidom = IFNULL(?, apellidom), 
         edad = IFNULL(?, edad), 
         telefono = IFNULL(?, telefono),
-        correo = IFNULL(?, correo), 
-        direccion = IFNULL(?, direccion) 
       WHERE 
         BIN_TO_UUID(id) = ?`,
-      [nombre, apellidop, apellidom, edad, telefono, correo, direccion, id]
+      [nombre, apellidop, apellidom, edad, telefono, id]
     );
 
     if (result.affectedRows === 0)
@@ -120,6 +151,58 @@ export const updatePaciente = async (req, res) => {
   } catch (error) {
     console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al actualizar la información del paciente" });
+  }
+};
+
+export const updatePaciente = async (req, res) => {
+  try {
+    //console.log(req.body)
+    const { id } = req.params;
+    const { nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion } = req.body;
+
+    const [result] = await pool.query(
+      `UPDATE pacientes 
+        SET 
+        nombre = IFNULL(?, nombre), 
+        apellidop = IFNULL(?, apellidop), 
+        apellidom = IFNULL(?, apellidom), 
+        edad = IFNULL(?, edad), 
+        sexo = IFNULL(?, sexo), 
+        telefono = IFNULL(?, telefono),
+        correo = IFNULL(?, correo), 
+        direccion = IFNULL(?, direccion) 
+      WHERE 
+        BIN_TO_UUID(id) = ?`,
+      [nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id]
+    );
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Paciente no encontrado" });
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, nombre, apellidop, apellidom FROM pacientes WHERE BIN_TO_UUID(id) = ?"
+      ,[id]);
+
+    console.log("Update Paciente: ")
+    console.log(rows[0])
+    res.json(rows[0]);
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Ocurrió un error al actualizar la información del paciente" });
+  }
+};
+
+export const deletePaciente = async (req, res) => {
+  try {
+    //console.log(req.body)
+    const { id } = req.params;
+    const [rows] = await pool.query("DELETE FROM pacientes WHERE id = uuid_to_bin(?)", [id]);
+    if (rows.affectedRows <= 0) {
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+
+    res.json({id});
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Ocurrió un error al eliminar al paciente" });
   }
 };
 
