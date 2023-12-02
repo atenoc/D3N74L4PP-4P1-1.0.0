@@ -167,7 +167,7 @@ export const updatePaciente = async (req, res) => {
         apellidop = IFNULL(?, apellidop), 
         apellidom = IFNULL(?, apellidom), 
         edad = IFNULL(?, edad), 
-        sexo = IFNULL(?, sexo), 
+        id_sexo = IFNULL(?, id_sexo), 
         telefono = IFNULL(?, telefono),
         correo = IFNULL(?, correo), 
         direccion = IFNULL(?, direccion) 
