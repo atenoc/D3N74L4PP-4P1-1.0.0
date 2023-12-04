@@ -15,7 +15,7 @@ export const createPaciente = async (req, res) => {
       const [result] = await pool.execute(`
         INSERT INTO pacientes (id, nombre, apellidop, apellidom, edad, id_sexo, telefono, correo, direccion, id_usuario, id_clinica, fecha_creacion) 
         VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-        [nombre, apellidop, apellidom || null, edad || null, sexo || null, telefono, correo || null, direccion || null, id_usuario, id_clinica, fecha_creacion]
+        [nombre, apellidop, apellidom, edad || null, sexo || null, telefono, correo || null, direccion || null, id_usuario, id_clinica, fecha_creacion]
       );
   
       if (result.affectedRows === 1) {
