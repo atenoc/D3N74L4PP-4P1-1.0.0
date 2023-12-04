@@ -4,13 +4,18 @@ export const createPaciente = async (req, res) => {
     try {
         console.log("Paciente::")
       console.log(req.body)
-      const { nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion} = req.body;
+      const { nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id_usuario, id_clinica, fecha_creacion} = req.body;
+
+      const [existingPaciente] = await pool.execute("SELECT id FROM pacientes WHERE apellidop = ? AND apellidom = ? AND telefono = ?", [apellidop, apellidom, telefono]);
+      if (existingPaciente.length > 0) {
+        return res.status(400).json({ message: "400" });
+      }
   
       // insertar el nuevo registro
       const [result] = await pool.execute(`
-        INSERT INTO pacientes (id, nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion) 
-        VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-        [nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion]
+        INSERT INTO pacientes (id, nombre, apellidop, apellidom, edad, id_sexo, telefono, correo, direccion, id_usuario, id_clinica, fecha_creacion) 
+        VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
+        [nombre, apellidop, apellidom || null, edad || null, sexo || null, telefono, correo || null, direccion || null, id_usuario, id_clinica, fecha_creacion]
       );
   
       if (result.affectedRows === 1) {
@@ -23,7 +28,7 @@ export const createPaciente = async (req, res) => {
       }
       const { id } = idResult[0];
   
-      res.status(201).json({ id, nombre, apellidop, apellidom, edad, telefono, id_usuario, id_clinica, fecha_creacion });
+      res.status(201).json({ id, nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id_usuario, id_clinica, fecha_creacion });
       
     } catch (error) {
       console.log(error)
