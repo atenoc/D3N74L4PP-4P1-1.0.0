@@ -4,19 +4,19 @@ import  moment  from "moment";
 export const createEvento = async (req, res) => {
   try {
     //console.log(req.body)
-    const { title, motivo, start, end, nota, id_medico, id_clinica, id_usuario, fecha_creacion} = req.body;
+    const { title, motivo, start, end, nota, color, id_medico, id_clinica, id_usuario, fecha_creacion} = req.body;
 
     console.log("fecha_creacion: "+fecha_creacion)
 
-    const id_estatus_cita = 'EST_CT_OPN';
-      const id_estatus_pago = 'EST_PG_SNP';
-      const id_tipo_pago='TP_PG_NA'
+    const id_estatus_cita = color;
+    const id_estatus_pago = 'EST_PG_SNP';
+    const id_tipo_pago='TP_PG_NA'
 
-      const [result] = await pool.query(`
-        INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_paciente, id_clinica, id_usuario, fecha_creacion) 
-        VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)
-        `,[title, motivo || "", start, end, nota, id_estatus_cita, id_estatus_pago,id_tipo_pago, id_clinica, id_usuario, fecha_creacion]
-      );
+    const [result] = await pool.query(`
+      INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_paciente, id_clinica, id_usuario, fecha_creacion) 
+      VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)
+      `,[title, motivo || "", start, end, nota, id_estatus_cita, id_estatus_pago,id_tipo_pago, id_clinica, id_usuario, fecha_creacion]
+    );
 
     if (result.affectedRows === 1) {
       console.log("Cita registrada")
@@ -42,11 +42,11 @@ export const createEvento = async (req, res) => {
 export const createCita = async (req, res) => {
     try {
       //console.log(req.body)
-      const { title, motivo, start, end, nota, id_medico, id_paciente, id_clinica, id_usuario, fecha_creacion} = req.body;
+      const { title, motivo, start, end, nota, color, id_medico, id_paciente, id_clinica, id_usuario, fecha_creacion} = req.body;
 
       console.log("fecha_creacion: "+fecha_creacion)
 
-      const id_estatus_cita = 'EST_CT_OPN';
+      const id_estatus_cita = color;
       const id_estatus_pago = 'EST_PG_SNP';
       const id_tipo_pago='TP_PG_NA'
 
@@ -93,6 +93,7 @@ export const createCita = async (req, res) => {
         p.apellidom,
         p.edad,
         (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario)) AS nombre_usuario_creador,
+        c.id_estatus_cita,
         DATE_FORMAT(c.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion
       FROM citas c
       LEFT JOIN pacientes p ON c.id_paciente = p.id
@@ -103,8 +104,10 @@ export const createCita = async (req, res) => {
         title: cita.titulo,
         start: moment(cita.fecha_hora_inicio).toDate(), // Convierte la cadena a objeto Date
         end: moment(cita.fecha_hora_fin).toDate(), // Convierte la cadena a objeto Date
-        backgroundColor: '#00a65a', //Success (green)
-        borderColor    : '#00a65a', //Success (green)
+        //backgroundColor: '#00a65a', //Success (green)
+        //borderColor    : '#00a65a', //Success (green)
+        backgroundColor: cita.id_estatus_cita,
+        borderColor    : cita.id_estatus_cita,
         //allDay: true,
         classNames: ['cursor-pointer'],
         //display: 'inverse-background',
