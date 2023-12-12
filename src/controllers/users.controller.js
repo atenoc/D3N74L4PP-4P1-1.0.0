@@ -344,6 +344,8 @@ export const getUser = async (req, res) => {
       SELECT 
         BIN_TO_UUID(id) id,
         BIN_TO_UUID(id_rol) id_rol,
+        nombre,
+        apellidop,
         (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
         BIN_TO_UUID(id_clinica) id_clinica
       FROM usuarios 
