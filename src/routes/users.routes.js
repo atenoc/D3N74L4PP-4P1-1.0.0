@@ -12,7 +12,8 @@ import {
   getUserByIdUserAndCorreo,
   getUsersPaginationByIdUser,
   getUsersPaginationByIdClinica,
-  updateUserPassword
+  updateUserPassword,
+  getPassByIdUser
   
 } from "../controllers/users.controller.js";
 
@@ -25,6 +26,7 @@ router.post(path, verificarToken, createUser);
 // GET All
 router.get(path, verificarToken, getUsers);
 router.get(path+"/:id", verificarToken, getUser);
+router.get(path+"/:id/contrasena", verificarToken, getPassByIdUser);
 
 // PATCH One
 router.patch(path+"/:id", verificarToken, updateUser);
@@ -41,6 +43,5 @@ router.get(path+"/paginacion/clinica/:id_clinica", verificarToken, getUsersPagin
 
 // PATCH One
 router.patch(path+"/password/usuario/:id", verificarToken, updateUserPassword);
-
 
 export default router;
