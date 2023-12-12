@@ -78,6 +78,7 @@ export const createCita = async (req, res) => {
 
   export const getCitas = async (req, res) => {
     try {
+      const { id_clinica } = req.params;
 
       const [rowsCitas] = await pool.query(`
       SELECT 
@@ -97,8 +98,9 @@ export const createCita = async (req, res) => {
         DATE_FORMAT(c.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion
       FROM citas c
       LEFT JOIN pacientes p ON c.id_paciente = p.id
+      WHERE BIN_TO_UUID(c.id_clinica) = ? 
       ORDER BY c.autoincremental DESC
-      `);
+      `, [id_clinica]);
 
       const events = rowsCitas.map(cita => ({
         title: cita.titulo,
