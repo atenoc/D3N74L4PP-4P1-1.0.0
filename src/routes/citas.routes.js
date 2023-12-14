@@ -16,7 +16,7 @@ const path = "/citas"
 
 router.post(path+"/evento", verificarToken, createEvento);
 router.post(path, verificarToken, createCita);
-router.get(path+"/:id_clinica", verificarToken, getCitas);
+router.get(path+"/clinica/:id_clinica", verificarToken, getCitas);
 router.get(path+"/:id", verificarToken, getCitaById);
 
 router.patch(path+"/:id", verificarToken, updateCita);
