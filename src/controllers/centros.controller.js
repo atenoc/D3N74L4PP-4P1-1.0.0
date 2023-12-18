@@ -115,14 +115,27 @@ export const deleteCentro = async (req, res) => {
       const [rows] = await pool.query("DELETE FROM clinicas WHERE id = uuid_to_bin(?)", [id]);
   
       if (rows.affectedRows <= 0) {
-        return res.status(404).json({ message: "Centro no encontrado" });
+        return res.status(404).json({ message: "Centro no encontrado (al eliminar clínica)" });
+      }
+
+      const [rowsUsuarios] = await pool.query("DELETE FROM usuarios WHERE id_clinica = uuid_to_bin(?)", [id]);
+      if (rowsUsuarios.affectedRows <= 0) {
+        console.log("No se encontraron pacientes para eliminar")
+      }
+
+      const [rowsPaciente] = await pool.query("DELETE FROM pacientes WHERE id_clinica = uuid_to_bin(?)", [id]);
+      if (rowsPaciente.affectedRows <= 0) {
+        console.log("No se encontraron pacientes para eliminar")
+      }
+
+      const [rowsCitas] = await pool.query("DELETE FROM citas WHERE id_clinica = uuid_to_bin(?)", [id]);
+      if (rowsCitas.affectedRows <= 0) {
+        console.log("No se encontraron citas para eliminar")
       }
   
-      //res.sendStatus(204);
-      //res.sendStatus(200);
-      res.json({"status":"Id:"+ id +" - Centro eliminado"});
+      res.json({"status":"Id:"+ id +" - Clinica eliminada eliminado"});
     } catch (error) {
-      //console.log(error)
+      console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al eliminar el centro dental" });
     }
 };

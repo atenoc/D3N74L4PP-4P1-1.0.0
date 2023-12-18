@@ -16,7 +16,7 @@ export const getRoles = async (req, res) => {
       let rows; 
 
       if (descRol == "suadmin") {
-        const [suadminRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles WHERE rol != 'sop' ORDER BY autoincremental");
+        const [suadminRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles WHERE rol != 'sop' AND rol != 'suadmin' ORDER BY autoincremental");
         rows = suadminRows;
       } else if ((descRol == "sop")){
         const [userRows] = await pool.query("SELECT BIN_TO_UUID(id) id, rol, descripcion FROM cat_roles ORDER BY autoincremental");
@@ -51,4 +51,14 @@ export const getEspecialidades = async (req, res) => {
       console.log("getEspecialidades:: "+ error)
       return res.status(500).json({ message: "Ocurrió un error al obtener las Especialidades" });
     }
+};
+
+export const getSexo = async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT id, descripcion FROM cat_sexo ORDER BY autoincremental");
+    res.json(rows);
+  } catch (error) {
+    console.log("getSexo:: "+ error)
+    return res.status(500).json({ message: "Ocurrió un error al obtener el Sexo" });
+  }
 };

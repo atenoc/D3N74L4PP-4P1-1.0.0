@@ -128,8 +128,10 @@ export const getPacienteById = async (req, res) => {
 
 export const updatePacienteCita = async (req, res) => {
   try {
-    //console.log(req.body)
+    console.log("Update Cita Paciente")
+    console.log(req.body)
     const { id } = req.params;
+    console.log("id Cita: " +id)
     const { nombre, apellidop, apellidom, edad, telefono} = req.body;
 
     const [result] = await pool.query(
@@ -139,7 +141,7 @@ export const updatePacienteCita = async (req, res) => {
         apellidop = IFNULL(?, apellidop), 
         apellidom = IFNULL(?, apellidom), 
         edad = IFNULL(?, edad), 
-        telefono = IFNULL(?, telefono),
+        telefono = IFNULL(?, telefono)
       WHERE 
         BIN_TO_UUID(id) = ?`,
       [nombre, apellidop, apellidom, edad, telefono, id]
@@ -161,6 +163,7 @@ export const updatePacienteCita = async (req, res) => {
 
 export const updatePaciente = async (req, res) => {
   try {
+    //console.log("Update paciente")
     //console.log(req.body)
     const { id } = req.params;
     const { nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion } = req.body;
