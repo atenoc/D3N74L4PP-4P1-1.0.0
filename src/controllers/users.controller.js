@@ -218,25 +218,26 @@ export const getUser = async (req, res) => {
       const { id } = req.params;
         const [rows] = await pool.query(`
         SELECT 
-          BIN_TO_UUID(id) id, 
-          correo, 
-          BIN_TO_UUID(id_rol)id_rol,
+          BIN_TO_UUID(u.id) id, 
+          u.correo, 
+          BIN_TO_UUID(u.id_rol)id_rol,
           (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol, 
           (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
-          id_titulo,
+          u.id_titulo,
           (SELECT titulo FROM cat_titulos WHERE id = id_titulo) AS titulo, 
-          nombre, 
-          apellidop, 
-          apellidom, 
-          id_especialidad,
-          (SELECT especialidad FROM cat_especialidades WHERE id = id_especialidad) AS especialidad, 
-          telefono, 
-          DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
-          llave_status, 
-          BIN_TO_UUID(id_usuario)id_usuario, 
-          BIN_TO_UUID(id_clinica)id_clinica 
-        FROM usuarios 
-        WHERE BIN_TO_UUID(id) = ?`
+          u.nombre, 
+          u.apellidop, 
+          u.apellidom, 
+          u.id_especialidad,
+          (SELECT especialidad FROM cat_especialidades WHERE id = u.id_especialidad) AS especialidad, 
+          u.telefono, 
+          DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
+          u.llave_status, 
+          BIN_TO_UUID(u.id_usuario)id_usuario, 
+          (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+          BIN_TO_UUID(u.id_clinica)id_clinica 
+        FROM usuarios u
+        WHERE BIN_TO_UUID(u.id) = ?`
         ,[id]);
   
       if (rows.length <= 0) {
