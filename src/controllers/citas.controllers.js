@@ -104,8 +104,8 @@ export const createCita = async (req, res) => {
 
       const events = rowsCitas.map(cita => ({
         title: cita.titulo,
-        start: moment(cita.fecha_hora_inicio).toDate(), // Convierte la cadena a objeto Date
-        end: moment(cita.fecha_hora_fin).toDate(), // Convierte la cadena a objeto Date
+        start: cita.fecha_hora_inicio, // Convierte la cadena a objeto Date
+        end: cita.fecha_hora_fin, // Convierte la cadena a objeto Date
         //backgroundColor: '#00a65a', //Success (green)
         //borderColor    : '#00a65a', //Success (green)
         backgroundColor: cita.id_estatus_cita,
