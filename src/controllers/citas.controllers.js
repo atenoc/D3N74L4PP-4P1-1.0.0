@@ -95,7 +95,7 @@ export const createCita = async (req, res) => {
         p.edad,
         (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario)) AS nombre_usuario_creador,
         c.id_estatus_cita,
-        DATE_FORMAT(c.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion
+        DATE_FORMAT(c.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion
       FROM citas c
       LEFT JOIN pacientes p ON c.id_paciente = p.id
       WHERE BIN_TO_UUID(c.id_clinica) = ? 
