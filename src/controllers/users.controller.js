@@ -2,7 +2,6 @@ import { pool } from "../db.js";
 import  moment  from "moment";
 import { esUUID } from "../utils/validacionUUID.js";
 import bcrypt from "bcrypt";
-import { getDecryptedPassword } from "../utils/encriptacion.js";
 
 const fecha_hoy = new Date();
 var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
@@ -56,7 +55,7 @@ export const createUser = async (req, res) => {
 };
 
 // old (deprecated)
-export const getUsers = async (req, res) => {
+/*export const getUsers = async (req, res) => {
   try {
     const [rows] = await pool.query(`
     SELECT 
@@ -85,7 +84,7 @@ export const getUsers = async (req, res) => {
     console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });
   }
-};
+};*/
 
 // Obtener Usuarios Paginados por id_usuario
 export const getUsersPaginationByIdUser = async (req, res) => {
@@ -201,7 +200,7 @@ export const getUsersPaginationByIdClinica = async (req, res) => {
         page: +page,
         size: +size,
         totalPages,
-        totalElements
+        totalElements: totalElements-1
       }
     })
   } catch (error) {
@@ -218,25 +217,26 @@ export const getUser = async (req, res) => {
       const { id } = req.params;
         const [rows] = await pool.query(`
         SELECT 
-          BIN_TO_UUID(id) id, 
-          correo, 
-          BIN_TO_UUID(id_rol)id_rol,
+          BIN_TO_UUID(u.id) id, 
+          u.correo, 
+          BIN_TO_UUID(u.id_rol)id_rol,
           (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol, 
           (SELECT descripcion FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS desc_rol, 
-          id_titulo,
+          u.id_titulo,
           (SELECT titulo FROM cat_titulos WHERE id = id_titulo) AS titulo, 
-          nombre, 
-          apellidop, 
-          apellidom, 
-          id_especialidad,
-          (SELECT especialidad FROM cat_especialidades WHERE id = id_especialidad) AS especialidad, 
-          telefono, 
-          DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
-          llave_status, 
-          BIN_TO_UUID(id_usuario)id_usuario, 
-          BIN_TO_UUID(id_clinica)id_clinica 
-        FROM usuarios 
-        WHERE BIN_TO_UUID(id) = ?`
+          u.nombre, 
+          u.apellidop, 
+          u.apellidom, 
+          u.id_especialidad,
+          (SELECT especialidad FROM cat_especialidades WHERE id = u.id_especialidad) AS especialidad, 
+          u.telefono, 
+          DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
+          u.llave_status, 
+          BIN_TO_UUID(u.id_usuario)id_usuario, 
+          (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+          BIN_TO_UUID(u.id_clinica)id_clinica 
+        FROM usuarios u
+        WHERE BIN_TO_UUID(u.id) = ?`
         ,[id]);
   
       if (rows.length <= 0) {
@@ -331,120 +331,3 @@ export const getUser = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al eliminar el usuario" });
     }
   };
-
-
-
-  // getUsuarioByCorreo // After Login
-  export const getUserByCorreo = async (req, res) => {
-    console.log("INICIANDO................................................................................................. ")
-    try {
-      //console.log(req.body)
-      const {correo } = req.params;
-      const [rows] = await pool.query(`
-      SELECT 
-        BIN_TO_UUID(id) id,
-        BIN_TO_UUID(id_rol) id_rol,
-        nombre,
-        apellidop,
-        (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
-        BIN_TO_UUID(id_clinica) id_clinica
-      FROM usuarios 
-      WHERE correo = ?
-      `, [correo]);
-
-      if (rows.length <= 0) {
-        return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
-      }
-      console.log(rows)
-      res.json(rows[0]);
-    } catch (error) {
-      console.log(error)
-      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por correo)" });
-    }
-  };
-
-
-  // validarUsuarioActivo - id usuario / correo // After Login 2
-  export const getUserByIdUserAndCorreo = async (req, res) => {
-    try {
-      //console.log(req.body)
-      const {id, correo } = req.params;
-      const [rows] = await pool.query(`
-      SELECT 
-        BIN_TO_UUID(id) id,
-        correo,
-        (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
-        nombre,
-        apellidop 
-      FROM usuarios 
-      WHERE BIN_TO_UUID(id) = ?
-      AND correo = ?
-      `, [id, correo]);
-
-      if (rows.length <= 0) {
-        return res.status(404).json({ message: "Usuario no encontrado (por id/correo)" });
-      }
-
-      res.json(rows[0]);
-    } catch (error) {
-      console.log(error)
-      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (por id/correo)" });
-    }
-  };
-
-  // Obtener usuario por id
-export const getPassByIdUser = async (req, res) => {
-  try {
-    //console.log(req.body)
-    const { id } = req.params;
-      const [rows] = await pool.query(`
-      SELECT 
-        BIN_TO_UUID(id) id, 
-        llave
-      FROM usuarios 
-      WHERE BIN_TO_UUID(id) = ?`
-      ,[id]);
-
-    if (rows.length <= 0) {
-      return res.status(404).json({ message: "Usuario no encontrado - pass" });
-    }
-
-    const desLlave = getDecryptedPassword(rows[0].llave);
-    console.log("Llave real Get Pass: "+desLlave)
-
-    console.log(rows[0])
-    res.json(rows[0]);
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ message: "Ocurrió un error al obtener el usuario - pass" });
-  }
-};
-
-// actualizar contraseña
-export const updateUserPassword = async (req, res) => {
-  try {
-    //console.log(req.body)
-    const { id } = req.params;
-    const { llave } = req.body;
-    const llave_status=1
-
-    const hashedPassword = await bcrypt.hash(llave, 10); // 10: número de rondas de hashing
-    console.log("hashedPassword:: "+ hashedPassword)
-
-    const [result] = await pool.query(
-      "UPDATE usuarios SET llave = IFNULL(?, llave), llave_status = IFNULL(?, llave_status) WHERE BIN_TO_UUID(id) = ?",
-      [hashedPassword, llave_status, id]
-    );
-
-    if (result.affectedRows === 0)
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, correo FROM usuarios WHERE BIN_TO_UUID(id) = ?",[id]);
-
-    res.json(rows[0]);
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ message: "Ocurrió un error al actualizar la contraseña" });
-  }
-};
-  
