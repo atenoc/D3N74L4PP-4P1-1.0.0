@@ -46,7 +46,7 @@ export const login = async (req, res) => {
     return res.json({status: 'Acceso a ruta protegida :D' })
 }*/
 
-// getUsuarioByCorreo // After Login
+// getUsuarioByCorreo // After Login 2
 export const getUserByCorreo = async (req, res) => {
     console.log("INICIANDO................................................................................................. ")
     try {
@@ -59,7 +59,8 @@ export const getUserByCorreo = async (req, res) => {
         nombre,
         apellidop,
         (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
-        BIN_TO_UUID(id_clinica) id_clinica
+        BIN_TO_UUID(id_clinica) id_clinica,
+        id_plan
       FROM usuarios 
       WHERE correo = ?
       `, [correo]);
@@ -76,7 +77,7 @@ export const getUserByCorreo = async (req, res) => {
 };
 
 
-// validarUsuarioActivo - id usuario / correo // After Login 2
+// validarUsuarioActivo - id usuario / correo // After Login 3
 export const getUserByIdUserAndCorreo = async (req, res) => {
     try {
       console.log("After Login 2 ***********************************************************************************************");

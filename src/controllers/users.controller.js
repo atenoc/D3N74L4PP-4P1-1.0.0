@@ -3,14 +3,14 @@ import  moment  from "moment";
 import { esUUID } from "../utils/validacionUUID.js";
 import bcrypt from "bcrypt";
 
-const fecha_hoy = new Date();
-var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
+//const fecha_hoy = new Date();
+//var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
 
 
 export const createUser = async (req, res) => {
   try {
-    //console.log(req.body)
-    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_clinica} = req.body;
+    console.log(req.body)
+    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_clinica, fecha_creacion} = req.body;
     const llave_estatus = 0;
 
     //comprobar si los parámetros son UUID / caso contrario insertarlos como null
@@ -30,9 +30,9 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(`
-      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
-      VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
-      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica || null]
+      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, id_clinica, id_usuario, id_plan, id_estatus_pago, fecha_creacion) 
+      VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), '0401PF30', '', ?)`,
+      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, id_clinica || null, id_usuario, fecha_creacion ]
     );
 
     if (result.affectedRows === 1) {
@@ -234,7 +234,9 @@ export const getUser = async (req, res) => {
           u.llave_status, 
           BIN_TO_UUID(u.id_usuario)id_usuario, 
           (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
-          BIN_TO_UUID(u.id_clinica)id_clinica 
+          BIN_TO_UUID(u.id_clinica)id_clinica,
+          u.id_plan,
+          (SELECT plan FROM cat_planes WHERE id = u.id_plan ) AS plan     
         FROM usuarios u
         WHERE BIN_TO_UUID(u.id) = ?`
         ,[id]);
@@ -290,17 +292,18 @@ export const getUser = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { nombre, apellidop, id_clinica } = req.body;
+      const { nombre, apellidop, id_clinica, fecha_creacion } = req.body;
   
       const [result] = await pool.query(
         `UPDATE usuarios 
           SET 
           nombre = IFNULL(?, nombre), 
           apellidop = IFNULL(?, apellidop),
-          id_clinica = IFNULL(UUID_TO_BIN(?), id_clinica) 
+          id_clinica = IFNULL(UUID_TO_BIN(?), id_clinica),
+          fecha_creacion = IFNULL(?, fecha_creacion)
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [nombre, apellidop, id_clinica, id]
+        [nombre, apellidop, id_clinica, fecha_creacion, id]
       );
   
       if (result.affectedRows === 0)
