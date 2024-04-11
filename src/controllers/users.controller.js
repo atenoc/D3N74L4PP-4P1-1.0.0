@@ -277,8 +277,8 @@ export const getUser = async (req, res) => {
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Usuario no encontrado" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM usuarios WHERE BIN_TO_UUID(id) = ?"
-        , [id]);
+      
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, nombre, apellidop FROM usuarios WHERE BIN_TO_UUID(id) = ?", [id]);
   
       res.json(rows[0]);
     } catch (error) {
