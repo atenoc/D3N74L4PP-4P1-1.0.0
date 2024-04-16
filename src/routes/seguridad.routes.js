@@ -19,7 +19,7 @@ router.post(path+'/login', login)
 router.get(path+"/usuario/correo/:correo", verificarToken, getUserByCorreo) 
 
 // Verificar usuario activo - After Login 3
-router.get(path+"/verificar/usuario/:id/correo/:correo", verificarToken, getUserByIdUserAndCorreo) 
+router.get(path+"/verificar/usuario/:id/correo/:correo/clinica/:id_clinica", verificarToken, getUserByIdUserAndCorreo) 
 
 // old
 //router.get(path+'/restringido', verificarToken, getRestringido)

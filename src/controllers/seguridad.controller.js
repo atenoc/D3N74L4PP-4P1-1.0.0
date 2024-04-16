@@ -60,7 +60,7 @@ export const getUserByCorreo = async (req, res) => {
         apellidop,
         (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
         BIN_TO_UUID(id_clinica) id_clinica,
-        id_plan
+        (SELECT id_plan FROM clinicas WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_clinica)) AS id_plan
       FROM usuarios 
       WHERE correo = ?
       `, [correo]);
@@ -82,18 +82,19 @@ export const getUserByIdUserAndCorreo = async (req, res) => {
     try {
       console.log("After Login 2 ***********************************************************************************************");
       //console.log(req.body)
-      const {id, correo } = req.params;
+      const {id, correo, id_clinica } = req.params;
       const [rows] = await pool.query(`
       SELECT 
         BIN_TO_UUID(id) id,
         correo,
         (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
         nombre,
-        apellidop 
+        apellidop,
+        (SELECT id_plan FROM clinicas WHERE BIN_TO_UUID(id) = ?) AS id_plan 
       FROM usuarios 
       WHERE BIN_TO_UUID(id) = ?
       AND correo = ?
-      `, [id, correo]);
+      `, [id_clinica, id, correo]);
 
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado (por id/correo)" });

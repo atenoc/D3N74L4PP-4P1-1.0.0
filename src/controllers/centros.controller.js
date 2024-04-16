@@ -1,16 +1,16 @@
 import { pool } from "../db.js";
 import  moment  from "moment";
 
-const fecha_hoy = new Date();
-var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
+//const fecha_hoy = new Date();
+//var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
 
 export const createCentro = async (req, res) => {
   try {
     //console.log(req.body)
-    const { nombre, telefono, correo, direccion, id_usuario} = req.body;
+    const { nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan} = req.body;
     const [result] = await pool.query(
-      "INSERT INTO clinicas (id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario) VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, UUID_TO_BIN(?))",
-      [nombre, telefono, correo, direccion, fecha_creacion, id_usuario]
+      "INSERT INTO clinicas (id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan) VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, UUID_TO_BIN(?), ?)",
+      [nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan]
     );
     if (result.affectedRows === 1) {
       console.log("Centro registrado")
@@ -23,7 +23,7 @@ export const createCentro = async (req, res) => {
     }
 
     const { id } = idResult[0];
-    res.status(201).json({ id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario });
+    res.status(201).json({ id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan });
 
   } catch (error) {
     console.log(error)
@@ -70,7 +70,9 @@ export const getCentro = async (req, res) => {
           correo, 
           direccion, 
           DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
-          id_usuario 
+          id_usuario,
+          id_plan,
+          (SELECT plan FROM cat_planes WHERE id = id_plan) AS desc_plan
         FROM clinicas 
         WHERE BIN_TO_UUID(id) = ?`
         ,[id]);
@@ -153,7 +155,8 @@ export const getCentroByIdUsuario = async (req, res) => {
       correo, 
       direccion, 
       DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
-      id_usuario 
+      id_usuario,
+      id_plan 
     FROM clinicas 
     WHERE BIN_TO_UUID(id_usuario) = ?`
     ,[id_usuario]);
