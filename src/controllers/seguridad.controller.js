@@ -5,7 +5,7 @@ import { getDecryptedPassword } from "../utils/encriptacion.js";
 
 export const login = async (req, res) => {
     try {
-        console.log(">>>>>>>>>> >>>>>>>>>> Logueando, recibiendo datos... <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
+        console.log(">>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> Logueando <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
         //console.log(req.body)
 
         const { correo, llave } =  req.body
@@ -18,9 +18,9 @@ export const login = async (req, res) => {
 
         if (rows.length === 1){
 
-            console.log("Llave encript: "+llave)
+            //console.log("Llave encript: "+llave)
             const desLlave = getDecryptedPassword(llave);
-            console.log("Llave real: "+desLlave)
+            //console.log("Llave real: "+desLlave)
 
             const user = rows[0];
             const match = await bcrypt.compare(desLlave, user.llave);
@@ -48,7 +48,7 @@ export const login = async (req, res) => {
 
 // getUsuarioByCorreo // After Login 2
 export const getUserByCorreo = async (req, res) => {
-    console.log("INICIANDO................................................................................................. ")
+    console.log("INICIANDO...................................................................................................................................................................... ")
     try {
       //console.log(req.body)
       const {correo } = req.params;
@@ -68,7 +68,7 @@ export const getUserByCorreo = async (req, res) => {
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
       }
-      console.log(rows)
+      //console.log(rows)
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
@@ -78,9 +78,9 @@ export const getUserByCorreo = async (req, res) => {
 
 
 // validarUsuarioActivo - id usuario / correo // After Login 3
-export const getUserByIdUserAndCorreo = async (req, res) => {
+export const validarUsuarioActivo = async (req, res) => {
     try {
-      console.log("After Login 2 ***********************************************************************************************");
+      console.log("Validando ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
       //console.log(req.body)
       const {id, correo, id_clinica } = req.params;
       const [rows] = await pool.query(`
@@ -90,6 +90,7 @@ export const getUserByIdUserAndCorreo = async (req, res) => {
         (SELECT rol FROM cat_roles WHERE BIN_TO_UUID(id) = BIN_TO_UUID(id_rol)) AS rol,
         nombre,
         apellidop,
+        llave_status, 
         (SELECT id_plan FROM clinicas WHERE BIN_TO_UUID(id) = ?) AS id_plan 
       FROM usuarios 
       WHERE BIN_TO_UUID(id) = ?

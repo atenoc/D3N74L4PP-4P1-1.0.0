@@ -15,11 +15,11 @@ export const validarPlaGratuito = async (req, res) => {
 
         const fecha_creacion = new Date(rows[0].fecha_creacion);
         fecha_creacion.setHours(0,0,0,0);
-        console.log("FECHA CREACION:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: "+fecha_creacion)
-        console.log("FECHA HOY::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: "+fecha_hoy)
+        //console.log("FECHA CREACION:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: "+fecha_creacion)
+        //console.log("FECHA HOY::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: "+fecha_hoy)
         const diferencia_ms = fecha_hoy.getTime() - fecha_creacion.getTime();
         let dias_de_diferencia = Math.floor(diferencia_ms / (1000 * 60 * 60 * 24));
-        console.log("Días de diferencia ============================================ ", dias_de_diferencia);
+        console.log("Días de diferencia:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: ", dias_de_diferencia);
 
         //dias_de_diferencia = 29
         if(dias_de_diferencia >= 30){
