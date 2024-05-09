@@ -89,6 +89,7 @@ export const createCita = async (req, res) => {
         c.motivo,
         c.nota,
         CONCAT(p.nombre, ' ', p.apellidop, ' ', p.apellidom) AS nombre_paciente,
+        BIN_TO_UUID(p.id) AS id_paciente,
         p.nombre,
         p.apellidop,
         p.apellidom,
@@ -117,6 +118,7 @@ export const createCita = async (req, res) => {
           id: cita.id,
           motivo: cita.motivo,
           notas: cita.nota,
+          id_paciente: cita.id_paciente,
           nombre_paciente: cita.nombre_paciente,
           nombre_usuario_creador: cita.nombre_usuario_creador,
           fecha_creacion: cita.fecha_creacion
