@@ -10,6 +10,7 @@ import catCatalogosRoutes from "./routes/catalogos.routes.js";
 import medicosRoutes from "./routes/medicos.routes.js";
 import pacientesRoutes from "./routes/pacientes.routes.js";
 import citasRoutes from "./routes/citas.routes.js";
+import historiasRoutes from "./routes/historias_dentales.routes.js";
 import planesRoutes from "./routes/planes.routes.js";
 
 const app = express();
@@ -29,7 +30,7 @@ app.use("/api", catCatalogosRoutes);
 app.use("/api", medicosRoutes);
 app.use("/api", pacientesRoutes);
 app.use("/api", citasRoutes);
-
+app.use("/api", historiasRoutes);
 app.use("/api", planesRoutes);
 
 app.use((req, res, next) => {
