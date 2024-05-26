@@ -229,7 +229,7 @@ export const createCita = async (req, res) => {
       SELECT 
         BIN_TO_UUID(c.id) AS id,  
         c.titulo,
-        DATE_FORMAT(c.fecha_hora_inicio, '%d-%m-%Y %H:%i:%s') AS fecha_hora_inicio,
+        DATE_FORMAT(c.fecha_hora_inicio, '%d/%m/%Y %H:%i:%s') AS fecha_hora_inicio,
         c.motivo,
         CONCAT(p.nombre, ' ', p.apellidop, ' ', p.apellidom) AS nombre_paciente,
         BIN_TO_UUID(p.id) AS id_paciente,
