@@ -58,7 +58,8 @@ export const getDiagnosticosByIpPaciente = async (req, res) => {
       (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_creador)) AS nombre_usuario_creador,
       DATE_FORMAT(d.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
       BIN_TO_UUID(d.id_usuario_actualizo) AS id_usuario_actualizo, 
-      fecha_actualizacion
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_actualizo)) AS nombre_usuario_actualizo,
+      DATE_FORMAT(d.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') AS fecha_actualizacion
     FROM diagnosticos d
     WHERE BIN_TO_UUID(d.id_paciente) = ?
     ORDER BY d.autoincremental DESC
@@ -86,9 +87,11 @@ export const getDiagnostico = async (req, res) => {
         BIN_TO_UUID(d.id_paciente) AS id_paciente, 
         BIN_TO_UUID(d.id_clinica) AS id_clinica, 
         BIN_TO_UUID(d.id_usuario_creador) AS id_usuario_creador, 
-        fecha_creacion,
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_creador)) AS nombre_usuario_creador, 
+        DATE_FORMAT(d.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
         BIN_TO_UUID(d.id_usuario_actualizo) AS id_usuario_actualizo, 
-        fecha_actualizacion 
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_actualizo)) AS nombre_usuario_actualizo,
+        DATE_FORMAT(d.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') as fecha_actualizacion
       FROM diagnosticos d
       WHERE BIN_TO_UUID(d.id) = ?`
       ,[id]);
@@ -96,7 +99,7 @@ export const getDiagnostico = async (req, res) => {
     if (rows.length <= 0) {
       return res.status(404).json({ message: "Diagnostico no encontrado" });
     }
-    //console.log(rows[0])
+    console.log(rows[0])
     res.json(rows[0]);
   } catch (error) {
     console.log(error)
@@ -107,7 +110,7 @@ export const getDiagnostico = async (req, res) => {
 
 export const updateDiagnostico = async (req, res) => {
   try {
-    //console.log(req.body)
+    console.log(req.body)
     const { id } = req.params;
     const { descripcion_problema, codigo_diagnostico, evidencias, id_usuario_actualizo, fecha_actualizacion } = req.body;
 
@@ -117,7 +120,7 @@ export const updateDiagnostico = async (req, res) => {
         descripcion_problema = IFNULL(?, descripcion_problema), 
         codigo_diagnostico = IFNULL(?, codigo_diagnostico), 
         evidencias = IFNULL(?, evidencias), 
-        id_usuario_actualizo = IFNULL(?, id_usuario_actualizo), 
+        id_usuario_actualizo = IFNULL(UUID_TO_BIN(?), id_usuario_actualizo), 
         fecha_actualizacion = IFNULL(?, fecha_actualizacion) 
       WHERE 
         BIN_TO_UUID(id) = ?`,
