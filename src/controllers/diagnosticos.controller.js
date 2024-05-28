@@ -90,7 +90,7 @@ export const getDiagnostico = async (req, res) => {
         BIN_TO_UUID(d.id_usuario_actualizo) AS id_usuario_actualizo, 
         fecha_actualizacion 
       FROM diagnosticos d
-      WHERE BIN_TO_UUID(u.id) = ?`
+      WHERE BIN_TO_UUID(d.id) = ?`
       ,[id]);
 
     if (rows.length <= 0) {
