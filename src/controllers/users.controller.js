@@ -332,3 +332,39 @@ export const getUser = async (req, res) => {
       return res.status(500).json({ message: "Ocurrió un error al eliminar el usuario" });
     }
   };
+
+
+  export const getUsuariosMedicosBuscadorByIdClinica = async (req, res) => {
+
+    console.log("Buscando usuarios medicos...");
+  
+    const { id_clinica } = req.params;
+    const { query } = req.body;
+  
+    console.log("Query: "+query);
+  
+    try {
+      if(query.length > 0){
+        const [rows] = await pool.query(`
+        SELECT 
+          BIN_TO_UUID(id) AS id, 
+          id_titulo, 
+          (SELECT titulo FROM cat_titulos WHERE id = id_titulo) AS titulo, 
+          id_especialidad,
+          (SELECT especialidad FROM cat_especialidades WHERE id = id_especialidad) AS especialidad,  
+          nombre, apellidop, apellidom
+        FROM usuarios
+        WHERE BIN_TO_UUID(id_clinica) = ? 
+          AND BIN_TO_UUID(id_rol) = 'b290fa05-5d9b-11ee-8537-00090ffe0001'
+          AND (nombre LIKE ? OR apellidop LIKE ? OR apellidom LIKE ?)
+        `, [id_clinica, `%${query}%`, `%${query}%`, `%${query}%`]);
+        res.json(rows);
+      }else{
+        res.json({});
+      }
+  
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Ocurrió un error al buscar usuarios médicos." });
+    }
+  };
