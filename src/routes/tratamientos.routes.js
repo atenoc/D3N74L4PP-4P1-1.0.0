@@ -2,7 +2,7 @@ import { Router } from "express";
 import { verificarToken } from "../controllers/verificarToken.js";
 import {
     createTratamiento,
-    getTratamientosByIpPaciente,
+    getTratamientosByIdPaciente,
     getTratamiento,
     updateTratamiento,
     deleteTratamiento
@@ -12,7 +12,7 @@ const router = Router();
 const path = "/tratamientos"
 
 router.post(path, verificarToken, createTratamiento);
-router.get(path+"/paciente/:id", verificarToken, getTratamientosByIpPaciente);
+router.get(path+"/paciente/:id", verificarToken, getTratamientosByIdPaciente);
 router.get(path+"/:id", verificarToken, getTratamiento);
 router.patch(path+"/:id", verificarToken, updateTratamiento);
 router.delete(path+"/:id", verificarToken, deleteTratamiento);

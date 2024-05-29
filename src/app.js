@@ -13,6 +13,7 @@ import citasRoutes from "./routes/citas.routes.js";
 import historiasRoutes from "./routes/historias_dentales.routes.js";
 import diagnosticosRoutes from "./routes/diagnosticos.routes.js";
 import tratamientosRoutes from "./routes/tratamientos.routes.js";
+import seguimientosRoutes from "./routes/seguimientos.routes.js";
 import planesRoutes from "./routes/planes.routes.js";
 
 const app = express();
@@ -36,6 +37,7 @@ app.use("/api", historiasRoutes);
 app.use("/api", historiasRoutes);
 app.use("/api", diagnosticosRoutes);
 app.use("/api", tratamientosRoutes);
+app.use("/api", seguimientosRoutes);
 app.use("/api", planesRoutes);
 
 app.use((req, res, next) => {

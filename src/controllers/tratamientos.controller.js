@@ -39,7 +39,7 @@ export const createTratamiento = async (req, res) => {
 };
 
 
-export const getTratamientosByIpPaciente = async (req, res) => {
+export const getTratamientosByIdPaciente = async (req, res) => {
   const { id } = req.params;
   console.log("id Paciente:: "+id)
   try {
