@@ -7,7 +7,8 @@ import {
   getCitas,
   getCitaById,
   updateCita,
-  deleteCita
+  deleteCita,
+  getCitasByIdPaciente
 
 } from "../controllers/citas.controllers.js";
 
@@ -23,5 +24,7 @@ router.patch(path+"/:id", verificarToken, updateCita);
 
 // DELETE One
 router.delete(path+"/:id", verificarToken, deleteCita);
+
+router.get(path+"/paciente/:id_paciente", verificarToken, getCitasByIdPaciente);
 
 export default router;

@@ -186,11 +186,11 @@ export const updatePaciente = async (req, res) => {
 
     if (result.affectedRows === 0)
       return res.status(404).json({ message: "Paciente no encontrado" });
-      const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, nombre, apellidop, apellidom FROM pacientes WHERE BIN_TO_UUID(id) = ?"
-      ,[id]);
+    
+    const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, nombre, apellidop, apellidom FROM pacientes WHERE BIN_TO_UUID(id) = ?", [id]);
 
-    console.log("Update Paciente: ")
-    console.log(rows[0])
+    //console.log("Update Paciente: ")
+    //console.log(rows[0])
     res.json(rows[0]);
   } catch (error) {
     console.log(error)

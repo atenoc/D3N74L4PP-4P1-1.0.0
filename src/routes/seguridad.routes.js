@@ -4,7 +4,7 @@ import {
     login, 
     //getRestringido,
     getUserByCorreo,
-    getUserByIdUserAndCorreo,
+    validarUsuarioActivo,
     getPassByIdUser,
     updateUserPassword
 } from "../controllers/seguridad.controller.js";
@@ -15,11 +15,11 @@ const path = "/seguridad"
 // Obtener token - Login 1
 router.post(path+'/login', login)
 
-// Obtener usuario por correo - After Login 2
+// getUserByCorreo - After Login 2
 router.get(path+"/usuario/correo/:correo", verificarToken, getUserByCorreo) 
 
-// Verificar usuario activo - After Login 3
-router.get(path+"/verificar/usuario/:id/correo/:correo", verificarToken, getUserByIdUserAndCorreo) 
+// verificar usuario activo - After Login 3 - Sidebar/Header/Footer
+router.get(path+"/verificar/usuario/:id/correo/:correo/clinica/:id_clinica", verificarToken, validarUsuarioActivo) 
 
 // old
 //router.get(path+'/restringido', verificarToken, getRestringido)

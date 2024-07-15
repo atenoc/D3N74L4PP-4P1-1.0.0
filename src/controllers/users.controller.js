@@ -3,14 +3,14 @@ import  moment  from "moment";
 import { esUUID } from "../utils/validacionUUID.js";
 import bcrypt from "bcrypt";
 
-const fecha_hoy = new Date();
-var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
+//const fecha_hoy = new Date();
+//var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss'); //format('YYYY-MM-DD');
 
 
 export const createUser = async (req, res) => {
   try {
     //console.log(req.body)
-    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_clinica} = req.body;
+    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_clinica, fecha_creacion} = req.body;
     const llave_estatus = 0;
 
     //comprobar si los parámetros son UUID / caso contrario insertarlos como null
@@ -30,9 +30,9 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(`
-      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, fecha_creacion, id_usuario, id_clinica) 
-      VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
-      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, fecha_creacion, id_usuario, id_clinica || null]
+      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, id_clinica, id_usuario, id_estatus_pago, fecha_creacion) 
+      VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), '', ?)`,
+      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, id_clinica || null, id_usuario, fecha_creacion ]
     );
 
     if (result.affectedRows === 1) {
@@ -189,7 +189,7 @@ export const getUsersPaginationByIdClinica = async (req, res) => {
     ORDER BY ${orderByClause}
     LIMIT ? OFFSET ?
     `, [id_clinica, +size, +offset]);
-    console.log([rows])
+    //console.log([rows])
     const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios WHERE BIN_TO_UUID(id_clinica) = ?', [id_clinica]);
     const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
     const totalElements = +totalPagesData[0]?.count;
@@ -242,7 +242,7 @@ export const getUser = async (req, res) => {
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-      console.log(rows[0])
+      //console.log(rows[0])
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
@@ -275,8 +275,8 @@ export const getUser = async (req, res) => {
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Usuario no encontrado" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM usuarios WHERE BIN_TO_UUID(id) = ?"
-        , [id]);
+      
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, nombre, apellidop FROM usuarios WHERE BIN_TO_UUID(id) = ?", [id]);
   
       res.json(rows[0]);
     } catch (error) {
@@ -290,17 +290,18 @@ export const getUser = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { nombre, apellidop, id_clinica } = req.body;
+      const { nombre, apellidop, id_clinica, fecha_creacion } = req.body;
   
       const [result] = await pool.query(
         `UPDATE usuarios 
           SET 
           nombre = IFNULL(?, nombre), 
           apellidop = IFNULL(?, apellidop),
-          id_clinica = IFNULL(UUID_TO_BIN(?), id_clinica) 
+          id_clinica = IFNULL(UUID_TO_BIN(?), id_clinica),
+          fecha_creacion = IFNULL(?, fecha_creacion)
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [nombre, apellidop, id_clinica, id]
+        [nombre, apellidop, id_clinica, fecha_creacion, id]
       );
   
       if (result.affectedRows === 0)
@@ -329,5 +330,41 @@ export const getUser = async (req, res) => {
     } catch (error) {
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al eliminar el usuario" });
+    }
+  };
+
+
+  export const getUsuariosMedicosBuscadorByIdClinica = async (req, res) => {
+
+    console.log("Buscando usuarios medicos...");
+  
+    const { id_clinica } = req.params;
+    const { query } = req.body;
+  
+    console.log("Query: "+query);
+  
+    try {
+      if(query.length > 0){
+        const [rows] = await pool.query(`
+        SELECT 
+          BIN_TO_UUID(id) AS id, 
+          id_titulo, 
+          (SELECT titulo FROM cat_titulos WHERE id = id_titulo) AS titulo, 
+          id_especialidad,
+          (SELECT especialidad FROM cat_especialidades WHERE id = id_especialidad) AS especialidad,  
+          nombre, apellidop, apellidom
+        FROM usuarios
+        WHERE BIN_TO_UUID(id_clinica) = ? 
+          AND BIN_TO_UUID(id_rol) = 'b290fa05-5d9b-11ee-8537-00090ffe0001'
+          AND (nombre LIKE ? OR apellidop LIKE ? OR apellidom LIKE ?)
+        `, [id_clinica, `%${query}%`, `%${query}%`, `%${query}%`]);
+        res.json(rows);
+      }else{
+        res.json({});
+      }
+  
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Ocurrió un error al buscar usuarios médicos." });
     }
   };

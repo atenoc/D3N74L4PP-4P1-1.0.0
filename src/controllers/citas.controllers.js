@@ -89,6 +89,7 @@ export const createCita = async (req, res) => {
         c.motivo,
         c.nota,
         CONCAT(p.nombre, ' ', p.apellidop, ' ', p.apellidom) AS nombre_paciente,
+        BIN_TO_UUID(p.id) AS id_paciente,
         p.nombre,
         p.apellidop,
         p.apellidom,
@@ -117,6 +118,7 @@ export const createCita = async (req, res) => {
           id: cita.id,
           motivo: cita.motivo,
           notas: cita.nota,
+          id_paciente: cita.id_paciente,
           nombre_paciente: cita.nombre_paciente,
           nombre_usuario_creador: cita.nombre_usuario_creador,
           fecha_creacion: cita.fecha_creacion
@@ -137,7 +139,7 @@ export const createCita = async (req, res) => {
       const [rowsCitas] = await pool.query(`
       SELECT 
         BIN_TO_UUID(c.id) AS id,  
-        c.titulo,
+        c.titulo AS title,
         DATE_FORMAT(c.fecha_hora_inicio, '%Y-%m-%d %H:%i:%s') AS start,
         DATE_FORMAT(c.fecha_hora_fin, '%Y-%m-%d %H:%i:%s') AS end,
         c.motivo,
@@ -215,5 +217,36 @@ export const createCita = async (req, res) => {
     } catch (error) {
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al eliminar la cita" });
+    }
+  };
+
+  export const getCitasByIdPaciente = async (req, res) => {
+    try {
+      console.log("Entroooo")
+      const { id_paciente } = req.params;
+
+      const [rowsCitas] = await pool.query(`
+      SELECT 
+        BIN_TO_UUID(c.id) AS id,  
+        c.titulo,
+        DATE_FORMAT(c.fecha_hora_inicio, '%d/%m/%Y %H:%i:%s') AS fecha_hora_inicio,
+        c.motivo,
+        CONCAT(p.nombre, ' ', p.apellidop, ' ', p.apellidom) AS nombre_paciente,
+        BIN_TO_UUID(p.id) AS id_paciente,
+        p.nombre,
+        p.apellidop,
+        p.apellidom
+      FROM citas c
+      LEFT JOIN pacientes p ON c.id_paciente = p.id
+      WHERE BIN_TO_UUID(c.id_paciente) = ? 
+      ORDER BY c.autoincremental DESC
+      `, [id_paciente]);
+
+      console.log(rowsCitas)
+      res.json(rowsCitas);
+  
+    } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener las citas" });
     }
   };

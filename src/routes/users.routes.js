@@ -8,6 +8,7 @@ import {
   deleteUser,
   getUsersPaginationByIdUser,
   getUsersPaginationByIdClinica,
+  getUsuariosMedicosBuscadorByIdClinica
 } from "../controllers/users.controller.js";
 
 const router = Router();
@@ -15,6 +16,7 @@ const path = "/usuarios"
 
 // POST One
 router.post(path, verificarToken, createUser);
+router.post(path + "/buscador/:id_clinica", verificarToken, getUsuariosMedicosBuscadorByIdClinica);
 
 // GET All
 router.get(path+"/:id", verificarToken, getUser);
