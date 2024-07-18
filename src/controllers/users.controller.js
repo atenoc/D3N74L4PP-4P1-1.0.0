@@ -9,8 +9,8 @@ import bcrypt from "bcrypt";
 
 export const createUser = async (req, res) => {
   try {
-    //console.log(req.body)
-    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario, id_clinica, fecha_creacion} = req.body;
+    console.log(req.body)
+    const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_clinica, id_usuario_creador, fecha_creacion} = req.body;
     const llave_estatus = 0;
 
     //comprobar si los parámetros son UUID / caso contrario insertarlos como null
@@ -30,9 +30,9 @@ export const createUser = async (req, res) => {
 
     // Si el correo no existe, insertar el nuevo registro
     const [result] = await pool.execute(`
-      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, id_clinica, id_usuario, id_estatus_pago, fecha_creacion) 
-      VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), '', ?)`,
-      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, id_clinica || null, id_usuario, fecha_creacion ]
+      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, id_clinica, id_usuario_creador, fecha_creacion) 
+      VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
+      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, id_clinica || null, id_usuario_creador, fecha_creacion ]
     );
 
     if (result.affectedRows === 1) {
@@ -46,7 +46,7 @@ export const createUser = async (req, res) => {
     }
     const { id } = idResult[0];
 
-    res.status(201).json({ id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario, id_clinica });
+    res.status(201).json({ id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario_creador, id_clinica });
     
   } catch (error) {
     console.log(error)
@@ -70,8 +70,8 @@ export const createUser = async (req, res) => {
       e.especialidad,  
       u.telefono, 
       DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      BIN_TO_UUID(id_usuario)id_usuario,  
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+      BIN_TO_UUID(id_usuario_creador)id_usuario_creador,  
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario_creador)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
     LEFT JOIN cat_titulos t ON u.titulo = t.id
@@ -86,7 +86,7 @@ export const createUser = async (req, res) => {
   }
 };*/
 
-// Obtener Usuarios Paginados por id_usuario
+// Obtener Usuarios Paginados por id_usuario_creador
 export const getUsersPaginationByIdUser = async (req, res) => {
   const { id } = req.params;
   try {
@@ -116,19 +116,19 @@ export const getUsersPaginationByIdUser = async (req, res) => {
       e.especialidad AS especialidad,  
       u.telefono, 
       DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      BIN_TO_UUID(id_usuario) id_usuario,  
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+      BIN_TO_UUID(id_usuario_creador) id_usuario_creador,  
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario_creador)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
     LEFT JOIN cat_roles r ON u.id_rol = r.id
     LEFT JOIN cat_titulos t ON u.id_titulo = t.id
     LEFT JOIN cat_especialidades e ON u.id_especialidad = e.id
-    WHERE BIN_TO_UUID(u.id_usuario) = ? 
+    WHERE BIN_TO_UUID(u.id_usuario_creador) = ? 
     ORDER BY ${orderByClause}
     LIMIT ? OFFSET ?
     `, [id, +size, +offset]);
     //console.log([rows])
-    const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios WHERE BIN_TO_UUID(id_usuario) = ?', [id]);
+    const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM usuarios WHERE BIN_TO_UUID(id_usuario_creador) = ?', [id]);
     const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
     const totalElements = +totalPagesData[0]?.count;
 
@@ -177,8 +177,8 @@ export const getUsersPaginationByIdClinica = async (req, res) => {
       e.especialidad AS especialidad,  
       u.telefono, 
       DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      BIN_TO_UUID(id_usuario) id_usuario,  
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
+      BIN_TO_UUID(id_usuario_creador) id_usuario_creador,  
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario_creador)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_clinica) AS id_clinica 
     FROM usuarios u
     LEFT JOIN cat_roles r ON u.id_rol = r.id
@@ -230,11 +230,13 @@ export const getUser = async (req, res) => {
           u.id_especialidad,
           (SELECT especialidad FROM cat_especialidades WHERE id = u.id_especialidad) AS especialidad, 
           u.telefono, 
-          DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
           u.llave_status, 
-          BIN_TO_UUID(u.id_usuario)id_usuario, 
-          (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario)) AS nombre_usuario_creador,
-          BIN_TO_UUID(u.id_clinica)id_clinica 
+          BIN_TO_UUID(u.id_clinica)id_clinica,
+          BIN_TO_UUID(u.id_usuario_creador)id_usuario_creador, 
+          (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario_creador)) AS nombre_usuario_creador,
+          DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,  
+          (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario_actualizo)) AS nombre_usuario_actualizo,
+          DATE_FORMAT(u.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') as fecha_actualizacion 
         FROM usuarios u
         WHERE BIN_TO_UUID(u.id) = ?`
         ,[id]);
@@ -255,7 +257,7 @@ export const getUser = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono } = req.body;
+      const { correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario_actualizo, fecha_actualizacion } = req.body;
   
       const [result] = await pool.query(
         `UPDATE usuarios 
@@ -267,10 +269,12 @@ export const getUser = async (req, res) => {
           apellidop = IFNULL(?, apellidop), 
           apellidom = IFNULL(?, apellidom), 
           id_especialidad = IFNULL(?, id_especialidad), 
-          telefono = IFNULL(?, telefono) 
+          telefono = IFNULL(?, telefono),
+          id_usuario_actualizo = IFNULL(UUID_TO_BIN(?), id_usuario_actualizo), 
+          fecha_actualizacion = IFNULL(?, fecha_actualizacion)
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id]
+        [correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario_actualizo, fecha_actualizacion, id]
       );
   
       if (result.affectedRows === 0)

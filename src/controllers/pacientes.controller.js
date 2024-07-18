@@ -2,9 +2,14 @@ import { pool } from "../db.js";
 
 export const createPaciente = async (req, res) => {
     try {
-        console.log("Paciente::")
+      console.log("Paciente::")
       console.log(req.body)
-      const { nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id_usuario, id_clinica, fecha_creacion} = req.body;
+      const { nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id_usuario_creador, id_clinica, fecha_creacion} = req.body;
+      var _sexo;
+
+      if(sexo=='null'){
+        _sexo=null
+      }
 
       const [existingPaciente] = await pool.execute("SELECT id FROM pacientes WHERE apellidop = ? AND apellidom = ? AND telefono = ?", [apellidop, apellidom, telefono]);
       if (existingPaciente.length > 0) {
@@ -13,22 +18,22 @@ export const createPaciente = async (req, res) => {
   
       // insertar el nuevo registro
       const [result] = await pool.execute(`
-        INSERT INTO pacientes (id, nombre, apellidop, apellidom, edad, id_sexo, telefono, correo, direccion, id_usuario, id_clinica, fecha_creacion) 
+        INSERT INTO pacientes (id, nombre, apellidop, apellidom, edad, id_sexo, telefono, correo, direccion, id_usuario_creador, id_clinica, fecha_creacion) 
         VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-        [nombre, apellidop, apellidom, edad || null, sexo || null, telefono, correo || null, direccion || null, id_usuario, id_clinica, fecha_creacion]
+        [nombre, apellidop, apellidom, edad || null, _sexo || null, telefono, correo || null, direccion || null, id_usuario_creador, id_clinica, fecha_creacion]
       );
   
       if (result.affectedRows === 1) {
         console.log("Paciente registrado")
       }
   
-      const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM pacientes WHERE nombre = ? AND apellidop = ? AND BIN_TO_UUID(id_usuario) = ? AND BIN_TO_UUID(id_clinica) = ? AND fecha_creacion = ?", [nombre, apellidop, id_usuario, id_clinica, fecha_creacion]);
+      const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM pacientes WHERE nombre = ? AND apellidop = ? AND BIN_TO_UUID(id_usuario_creador) = ? AND BIN_TO_UUID(id_clinica) = ? AND fecha_creacion = ?", [nombre, apellidop, id_usuario_creador, id_clinica, fecha_creacion]);
       if (!idResult.length) {
         return res.status(500).json({ message: "No se encontró el ID del paciente insertado" });
       }
       const { id } = idResult[0];
   
-      res.status(201).json({ id, nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id_usuario, id_clinica, fecha_creacion });
+      res.status(201).json({ id, nombre, apellidop, apellidom, edad, _sexo, telefono, correo, direccion, id_usuario_creador, id_clinica, fecha_creacion });
       
     } catch (error) {
       console.log(error)
@@ -66,7 +71,7 @@ export const getPacientesPaginationByIdClinica = async (req, res) => {
       p.correo, 
       p.direccion, 
       DATE_FORMAT(p.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM pacientes WHERE BIN_TO_UUID(id) = BIN_TO_UUID(p.id_usuario)) AS nombre_usuario_creador,
+      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM pacientes WHERE BIN_TO_UUID(id) = BIN_TO_UUID(p.id_usuario_creador)) AS nombre_usuario_creador,
       BIN_TO_UUID(p.id_clinica) AS id_clinica 
     FROM pacientes p
     WHERE BIN_TO_UUID(p.id_clinica) = ?
@@ -108,9 +113,11 @@ export const getPacienteById = async (req, res) => {
         p.telefono, 
         p.correo,
         p.direccion,
-        BIN_TO_UUID(id_usuario) id_usuario,  
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(p.id_usuario)) AS nombre_usuario_creador, 
-        DATE_FORMAT(p.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion
+        BIN_TO_UUID(id_usuario_creador) id_usuario_creador,  
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(p.id_usuario_creador)) AS nombre_usuario_creador, 
+        DATE_FORMAT(p.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(p.id_usuario_actualizo)) AS nombre_usuario_actualizo,
+        DATE_FORMAT(p.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') AS fecha_actualizacion 
       FROM pacientes p 
       WHERE BIN_TO_UUID(p.id) = ?`
       ,[id]);
@@ -166,7 +173,7 @@ export const updatePaciente = async (req, res) => {
     //console.log("Update paciente")
     //console.log(req.body)
     const { id } = req.params;
-    const { nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion } = req.body;
+    const { nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id_usuario_actualizo, fecha_actualizacion } = req.body;
 
     const [result] = await pool.query(
       `UPDATE pacientes 
@@ -178,10 +185,12 @@ export const updatePaciente = async (req, res) => {
         id_sexo = IFNULL(?, id_sexo), 
         telefono = IFNULL(?, telefono),
         correo = IFNULL(?, correo), 
-        direccion = IFNULL(?, direccion) 
+        direccion = IFNULL(?, direccion),
+        id_usuario_actualizo = IFNULL(UUID_TO_BIN(?), id_usuario_actualizo), 
+        fecha_actualizacion = IFNULL(?, fecha_actualizacion)
       WHERE 
         BIN_TO_UUID(id) = ?`,
-      [nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id]
+      [nombre, apellidop, apellidom, edad, sexo, telefono, correo, direccion, id_usuario_actualizo, fecha_actualizacion, id]
     );
 
     if (result.affectedRows === 0)
@@ -241,6 +250,6 @@ export const getPacientesBuscadorByIdClinica = async (req, res) => {
 
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: "Ocurrió un error al obtener buscar..." });
+    return res.status(500).json({ message: "Ocurrió un error al buscar pacientes por id clínica..." });
   }
 };
