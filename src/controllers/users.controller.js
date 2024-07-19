@@ -13,6 +13,17 @@ export const createUser = async (req, res) => {
     const { correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_clinica, id_usuario_creador, fecha_creacion} = req.body;
     const llave_estatus = 0;
 
+    var id_titulo;
+    var id_especialidad;
+    
+    if(titulo=='null'){
+      id_titulo=null
+    }
+
+    if(especialidad=='null'){
+      id_especialidad=null
+    }
+
     //comprobar si los parámetros son UUID / caso contrario insertarlos como null
     //const tituloUUID = esUUID(titulo) ? titulo : null;
     //const especialidadUUID = esUUID(especialidad) ? especialidad : null;
@@ -32,7 +43,7 @@ export const createUser = async (req, res) => {
     const [result] = await pool.execute(`
       INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, id_clinica, id_usuario_creador, fecha_creacion) 
       VALUES (UUID_TO_BIN(UUID()),?,?,UUID_TO_BIN(?),?,?,?,?,?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-      [correo, hashedPassword, rol, titulo, nombre, apellidop, apellidom, especialidad, llave_estatus, telefono, id_clinica || null, id_usuario_creador, fecha_creacion ]
+      [correo, hashedPassword, rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_estatus, telefono, id_clinica || null, id_usuario_creador, fecha_creacion ]
     );
 
     if (result.affectedRows === 1) {
@@ -46,7 +57,7 @@ export const createUser = async (req, res) => {
     }
     const { id } = idResult[0];
 
-    res.status(201).json({ id, correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, fecha_creacion, id_usuario_creador, id_clinica });
+    res.status(201).json({ id, correo, llave, rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, telefono, fecha_creacion, id_usuario_creador, id_clinica });
     
   } catch (error) {
     console.log(error)
