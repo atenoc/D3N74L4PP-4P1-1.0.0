@@ -26,7 +26,7 @@ router.patch(path+"/:id", verificarToken, updateUser);
 router.patch(path+"/usuario/:id/registro", verificarToken, updateUserRegister);
 
 // DELETE One
-router.delete(path+"/:id", verificarToken, deleteUser);
+router.put(path+"/:id", verificarToken, deleteUser);
 
 // GET One By
 router.get(path+"/paginacion/usuario/:id", verificarToken, getUsersPaginationByIdUser);

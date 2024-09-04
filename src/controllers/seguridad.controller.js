@@ -2,13 +2,17 @@ import { pool } from "../db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { getDecryptedPassword } from "../utils/encriptacion.js";
+import { registroAcceso } from "../utils/eventosServices.js";
 
 export const login = async (req, res) => {
     try {
         console.log(">>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> Logueando <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
         //console.log(req.body)
 
-        const { correo, llave } =  req.body
+        const { correo, llave, fecha } =  req.body
+        const ipOrigen = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        console.log("ipOrigen:: "+ipOrigen)
+
         const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, fecha_creacion FROM usuarios WHERE correo = ? ", [correo]);
 
         if (rows.length <= 0) {
@@ -27,9 +31,12 @@ export const login = async (req, res) => {
 
             if(match){
                 console.log("Id logueado: "+rows[0].id)
+                registroAcceso(rows[0].id, ipOrigen, 'Exitoso', fecha)
+
                 const token = jwt.sign({_id: rows[0].id}, 'secretkey')
                 res.status(200).json({token}) 
             }else{
+              registroAcceso(rows[0].id, ipOrigen, 'Fallido', fecha)
                 console.log("Contraseña incorrecta")
                 return res.status(404).json({ message: "Contraseña incorrecta" });
             }
@@ -40,11 +47,6 @@ export const login = async (req, res) => {
         return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (login)" });
     }
 }
-
-/*export const getRestringido = async (req, res) => {
-    // POSTMAN: Validar token en la cabecera -> Authorization = Bearer + token
-    return res.json({status: 'Acceso a ruta protegida :D' })
-}*/
 
 // getUsuarioByCorreo // After Login 2
 export const getUserByCorreo = async (req, res) => {
