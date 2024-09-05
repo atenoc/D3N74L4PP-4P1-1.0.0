@@ -1,29 +1,27 @@
 import { pool } from "../db.js";
-import  moment  from "moment";
-
-//const fecha_hoy = new Date();
-//var fecha_creacion = moment(fecha_hoy).format('YYYY-MM-DD HH:mm:ss');
+import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../utils/eventosServices.js";
 
 export const createCentro = async (req, res) => {
   try {
     //console.log(req.body)
-    const { nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan} = req.body;
+    const { nombre, telefono, correo, direccion, fecha_creacion, id_usuario_creador, id_plan} = req.body;
     const [result] = await pool.query(
-      "INSERT INTO clinicas (id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan) VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, UUID_TO_BIN(?), ?)",
-      [nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan]
+      "INSERT INTO clinicas (id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario_creador, id_plan) VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, UUID_TO_BIN(?), ?)",
+      [nombre, telefono, correo, direccion, fecha_creacion, id_usuario_creador, id_plan]
     );
     if (result.affectedRows === 1) {
       console.log("Centro registrado")
     }
 
-    const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM clinicas WHERE nombre = ? AND telefono = ? AND BIN_TO_UUID(id_usuario) = ?", [nombre, telefono, id_usuario]);
-
+    const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM clinicas WHERE nombre = ? AND telefono = ? AND BIN_TO_UUID(id_usuario_creador) = ?", [nombre, telefono, id_usuario_creador]);
     if (!idResult.length) {
       return res.status(500).json({ message: "No se encontró el ID del centro insertado" });
     }
-
     const { id } = idResult[0];
-    res.status(201).json({ id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario, id_plan });
+
+    registroAuditoria(id, id_usuario_creador, id, 'CREATE', 'clinicas', fecha_creacion)
+
+    res.status(201).json({ id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario_creador, id_plan });
 
   } catch (error) {
     console.log(error)
@@ -34,24 +32,10 @@ export const createCentro = async (req, res) => {
 export const getCentros = async (req, res) => {
   try {
     //console.log(req.body)
-    const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, BIN_TO_UUID(id_usuario)id_usuario FROM clinicas ORDER BY autoincremental DESC");
-    // Formatear la lista de antes de enviarla como respuesta
-    const centrosFormateados = rows.map(response => {
-      const fecha_formateada = moment(response.fecha_creacion).format('DD/MM/YYYY HH:mm:ss');
-      const centro_formateado = {
-        id: response.id,
-        nombre: response.nombre,
-        telefono: response.telefono,
-        correo: response.correo,
-        direccion: response.direccion,
-        fecha_creacion: fecha_formateada,
-        id_usuario: response.id_usuario
-      };
-      return centro_formateado;
-    });
-
-    res.json(centrosFormateados);
-    //res.json(rows);
+    const [rows] = await pool.query(`
+      SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion FROM clinicas ORDER BY autoincremental DESC
+    `);
+    res.json(rows);
   } catch (error) {
     console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los centros" });
@@ -62,6 +46,12 @@ export const getCentro = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
+
+      const usuarioCreador = await usuarioCreadorRegistro(id);
+      const fechaCreacion = await fechaCreacionRegistro(id);
+      const usuarioActualizo = await usuarioActualizoRegistro(id);
+      const fechaActualizacion = await fechaActualizacionRegistro(id);
+
       const [rows] = await pool.query(`
         SELECT 
           BIN_TO_UUID(id) id, 
@@ -70,12 +60,18 @@ export const getCentro = async (req, res) => {
           correo, 
           direccion, 
           DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion, 
-          id_usuario,
+          -- id_usuario_creador,
           id_plan,
-          (SELECT plan FROM cat_planes WHERE id = id_plan) AS desc_plan
+          (SELECT plan FROM cat_planes WHERE id = id_plan) AS desc_plan,
+
+          ? AS nombre_usuario_creador,
+          ? AS fecha_creacion,
+          ? AS nombre_usuario_actualizo,    
+          ? AS fecha_actualizacion
+
         FROM clinicas 
         WHERE BIN_TO_UUID(id) = ?`
-        ,[id]);
+        ,[usuarioCreador, fechaCreacion, usuarioActualizo, fechaActualizacion, id]);
   
       if (rows.length <= 0) {
         console.log("Centro no encontrado")
@@ -93,7 +89,7 @@ export const updateCentro = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { nombre, telefono, correo, direccion } = req.body;
+      const { nombre, telefono, correo, direccion, id_usuario_actualizo, id_clinica, fecha_actualizacion } = req.body;
   
       const [result] = await pool.query(
         "UPDATE clinicas SET nombre = IFNULL(?, nombre), telefono = IFNULL(?, telefono), correo = IFNULL(?, correo), direccion = IFNULL(?, direccion) WHERE BIN_TO_UUID(id) = ?",[nombre, telefono, correo, direccion, id]
@@ -101,8 +97,11 @@ export const updateCentro = async (req, res) => {
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Centro no encontrado" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion, fecha_creacion, id_usuario FROM clinicas WHERE BIN_TO_UUID(id) = ?", [id]);
+      
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, nombre, telefono, correo, direccion FROM clinicas WHERE BIN_TO_UUID(id) = ?", [id]);
   
+      registroAuditoria(id, id_usuario_actualizo, id_clinica, 'UPDATE', 'clinicas', fecha_actualizacion)
+
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
@@ -114,6 +113,8 @@ export const deleteCentro = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
+      const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.body;
+
       const [rows] = await pool.query("DELETE FROM clinicas WHERE id = uuid_to_bin(?)", [id]);
   
       if (rows.affectedRows <= 0) {
@@ -134,6 +135,8 @@ export const deleteCentro = async (req, res) => {
       if (rowsCitas.affectedRows <= 0) {
         console.log("No se encontraron citas para eliminar")
       }
+
+      registroAuditoria(id, id_usuario_elimino, id_clinica, 'DELETE', 'usuarios', fecha_eliminacion)
   
       res.json({"status":"Id:"+ id +" - Clinica eliminada eliminado"});
     } catch (error) {
@@ -142,28 +145,30 @@ export const deleteCentro = async (req, res) => {
     }
 };
 
-// For login / validar si el usuario tiene registradada una clinica
-export const getCentroByIdUsuario = async (req, res) => {
+// For login / validar si el usuario tiene registrada una clinica
+export const getCentroByIdUserSuAdmin = async (req, res) => {
   try {
     //console.log(req.body)
     const { id_usuario } = req.params;
-    const [rows] = await pool.query(`
-    SELECT 
-      BIN_TO_UUID(id) id, 
-      nombre, 
-      telefono, 
-      correo, 
-      direccion, 
-      DATE_FORMAT(fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
-      id_usuario,
-      id_plan 
-    FROM clinicas 
-    WHERE BIN_TO_UUID(id_usuario) = ?`
+    const [result] = await pool.query(`
+      SELECT BIN_TO_UUID(id_clinica)id_clinica FROM auditoria WHERE tipo_evento='CREATE' AND tabla_afectada='clinicas' AND BIN_TO_UUID(id_usuario) = ?`
     ,[id_usuario]);
 
+    if (result.length <= 0) {
+      console.log("id Centro no encontrado (por id_usuario)")
+      return res.status(404).json({ message: "id Centro no encontrado (por id_usuario)" });
+    }
+
+    const id_clinica = result[0].id_clinica
+
+
+    const [rows] = await pool.query(`
+      SELECT * FROM clinicas WHERE BIN_TO_UUID(id) = ?`
+    ,[id_clinica]);
+
     if (rows.length <= 0) {
-      console.log("Centro no encontrado (por id_usuario)")
-      return res.status(404).json({ message: "Centro no encontrado (por id_usuario)" });
+      console.log("Centro no encontrado (por id_clinica)")
+      return res.status(404).json({ message: "id Centro no encontrado (por id_clinica)" });
     }
 
     res.json(rows[0]);

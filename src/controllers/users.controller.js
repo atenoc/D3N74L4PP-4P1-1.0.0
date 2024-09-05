@@ -1,5 +1,4 @@
 import { pool } from "../db.js";
-import  moment  from "moment";
 import { esUUID } from "../utils/validacionUUID.js";
 import bcrypt from "bcrypt";
 import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../utils/eventosServices.js";
@@ -334,6 +333,9 @@ export const getUser = async (req, res) => {
         return res.status(404).json({ message: "Usuario no encontrado para actualizar, al registrarse"});
         const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM usuarios WHERE BIN_TO_UUID(id) = ?"
         ,[id]);
+
+      //NOTA: No se registra este evento, ya que el usuario está creando su clinica y sólo actualizó su nombre real
+      //registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'usuarios', fecha_creacion)
   
       res.json(rows[0]);
     } catch (error) {
