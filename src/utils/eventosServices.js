@@ -31,7 +31,7 @@ export const usuarioCreadorRegistro = async (id_registro) => {
     );
 
     if (rows.length === 0) {
-      console.log("No se encontró ninguna id para el registro.");
+      console.log("No se encontró ninguna id para el registro: "+id_registro);
       return null; 
     }
 
@@ -53,12 +53,12 @@ export const usuarioCreadorRegistro = async (id_registro) => {
 export const fechaCreacionRegistro = async (id_registro) => {
   try {
     const [rows] = await pool.query(`
-      SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') AS fecha_evento FROM auditoria WHERE tipo_evento = 'CREATE' AND BIN_TO_UUID(id_registro) = ?`,
+      SELECT DATE_FORMAT(fecha_evento,'%d/%m/%Y %H:%i:%s') AS fecha_evento FROM auditoria WHERE tipo_evento = 'CREATE' AND BIN_TO_UUID(id_registro) = ?`,
       [id_registro]
     );
 
     if (rows.length === 0) {
-      console.log("No se encontró ninguna fecha_evento para el registro.");
+      console.log("No se encontró ninguna fecha_evento para el registro: "+id_registro);
       return null; 
     }
 
@@ -78,7 +78,7 @@ export const usuarioActualizoRegistro = async (id_registro) => {
     );
 
     if (rows.length === 0) {
-      console.log("No se encontró ninguna id_usuario para el registro.");
+      console.log("No se encontró ninguna id_usuario para el registro: "+id_registro);
       return null; 
     }
 
@@ -104,12 +104,12 @@ export const usuarioActualizoRegistro = async (id_registro) => {
 export const fechaActualizacionRegistro = async (id_registro) => {
   try {
     const [rows] = await pool.query(`
-      SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') AS fecha_evento FROM auditoria WHERE tipo_evento = 'UPDATE' AND BIN_TO_UUID(id_registro) = ? ORDER BY id DESC LIMIT 1`,
+      SELECT DATE_FORMAT(fecha_evento,'%d/%m/%Y %H:%i:%s') AS fecha_evento FROM auditoria WHERE tipo_evento = 'UPDATE' AND BIN_TO_UUID(id_registro) = ? ORDER BY id DESC LIMIT 1`,
       [id_registro]
     );
 
     if (rows.length === 0) {
-      console.log("No se encontró ninguna fecha_evento para el registro.");
+      console.log("No se encontró ninguna fecha_evento para el registro: "+id_registro);
       return null; 
     }
 

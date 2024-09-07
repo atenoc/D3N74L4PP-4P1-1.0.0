@@ -8,32 +8,27 @@ export const createUser = async (req, res) => {
     console.log("CREAR Usuario")
     console.log(req.body);
     const {
-      correo, llave, rol, titulo, nombre, apellidop, apellidom,
-      especialidad, telefono, id_clinica, id_usuario_creador, fecha_creacion
+      correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_clinica, id_usuario_creador, fecha_creacion
     } = req.body;
 
     const llave_estatus = 0;
+
     let id_titulo = titulo === 'null' ? null : titulo;
     let id_especialidad = especialidad === 'null' ? null : especialidad;
     let clinica = id_clinica === 'null' ? null : id_clinica;
 
-    // Verifica que los valores no sean `undefined`
-    if ([correo, llave, rol, nombre, apellidop, apellidom, telefono, id_clinica, id_usuario_creador, fecha_creacion].some(val => val === undefined)) {
-      return res.status(400).json({ message: 'Faltan algunos campos obligatorios' });
-    }
-
     const [existingUser] = await pool.execute("SELECT id FROM usuarios WHERE correo = ?", [correo]);
     if (existingUser.length > 0) {
-      return res.status(400).json({ message: "400" }); //usuario existente
+      return res.status(400).json({ message: "400" }); 
     }
 
     const hashedPassword = await bcrypt.hash(llave, 10); // 10: número de rondas de hashing
     console.log("hashedPassword:: " + hashedPassword);
 
     const [result] = await pool.execute(`
-      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, id_clinica, id_usuario_creador, fecha_creacion) 
-      VALUES (UUID_TO_BIN(UUID()), ?, ?, UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-      [correo, hashedPassword, rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_estatus, telefono, clinica, id_usuario_creador, fecha_creacion]
+      INSERT INTO usuarios (id, correo, llave, id_rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_status, telefono, id_clinica) 
+      VALUES (UUID_TO_BIN(UUID()), ?, ?, UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?) )`,
+      [correo, hashedPassword, rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, llave_estatus, telefono, clinica]
     );
 
     if (result.affectedRows === 1) {
@@ -59,37 +54,39 @@ export const createUser = async (req, res) => {
 };
 
 
-// old (deprecated)
-/*export const getUsers = async (req, res) => {
+export const getUsersOnlySop = async (req, res) => {
+
   try {
     const [rows] = await pool.query(`
     SELECT 
-      ROW_NUMBER() OVER (ORDER BY u.autoincremental DESC) AS contador,
-      BIN_TO_UUID(u.id) AS id, 
-      u.correo, 
-      u.rol, 
-      t.titulo, 
-      u.nombre, 
-      u.apellidop, 
-      u.apellidom, 
-      e.especialidad,  
-      u.telefono, 
-      DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      BIN_TO_UUID(id_usuario_creador)id_usuario_creador,  
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario_creador)) AS nombre_usuario_creador,
-      BIN_TO_UUID(u.id_clinica) AS id_clinica 
+        ROW_NUMBER() OVER (ORDER BY u.autoincremental DESC) AS contador,
+        BIN_TO_UUID(u.id) AS id, 
+        u.correo, 
+        r.descripcion AS desc_rol,
+        t.titulo AS titulo, 
+        u.nombre, 
+        u.apellidop, 
+        u.apellidom, 
+        e.especialidad AS especialidad,  
+        u.telefono, 
+        BIN_TO_UUID(u.id_clinica) AS id_clinica,
+        (SELECT nombre FROM clinicas WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_clinica)) AS nombre_clinica
     FROM usuarios u
-    LEFT JOIN cat_titulos t ON u.titulo = t.id
-    LEFT JOIN cat_especialidades e ON u.especialidad = e.id
-    ORDER BY u.autoincremental DESC
+    LEFT JOIN cat_roles r ON u.id_rol = r.id
+    LEFT JOIN cat_titulos t ON u.id_titulo = t.id
+    LEFT JOIN cat_especialidades e ON u.id_especialidad = e.id
+    WHERE r.rol = 'suadmin'
+    ORDER BY u.autoincremental DESC 
     `);
+
+    console.log(rows)
 
     res.json(rows);
   } catch (error) {
     console.log(error)
-    return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios" });
+    return res.status(500).json({ message: "Ocurrió un error al obtener los usuarios para sop" });
   }
-};*/
+};
 
 // Obtener Usuarios Paginados por id_usuario_creador
 export const getUsersPaginationByIdUser = async (req, res) => {
@@ -181,10 +178,8 @@ export const getUsersPaginationByIdClinica = async (req, res) => {
       u.apellidom, 
       e.especialidad AS especialidad,  
       u.telefono, 
-      DATE_FORMAT(u.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      BIN_TO_UUID(id_usuario_creador) id_usuario_creador,  
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(u.id_usuario_creador)) AS nombre_usuario_creador,
       BIN_TO_UUID(u.id_clinica) AS id_clinica 
+      
     FROM usuarios u
     LEFT JOIN cat_roles r ON u.id_rol = r.id
     LEFT JOIN cat_titulos t ON u.id_titulo = t.id
@@ -282,12 +277,10 @@ export const getUser = async (req, res) => {
           apellidop = IFNULL(?, apellidop), 
           apellidom = IFNULL(?, apellidom), 
           id_especialidad = IFNULL(?, id_especialidad), 
-          telefono = IFNULL(?, telefono),
-          id_usuario_actualizo = IFNULL(UUID_TO_BIN(?), id_usuario_actualizo), 
-          fecha_actualizacion = IFNULL(?, fecha_actualizacion)
+          telefono = IFNULL(?, telefono)
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario_actualizo, fecha_actualizacion, id]
+        [correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id]
       );
   
       if (result.affectedRows === 0)
@@ -310,35 +303,39 @@ export const getUser = async (req, res) => {
     }
   };
 
-
+ // REGISTRO USER
   export const updateUserRegister = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { nombre, apellidop, id_clinica, fecha_creacion } = req.body;
+      const { nombre, apellidop, id_clinica } = req.body;
+
+      console.log("id actualizar::: "+id)
+      console.log(req.body)
   
       const [result] = await pool.query(
         `UPDATE usuarios 
           SET 
           nombre = IFNULL(?, nombre), 
           apellidop = IFNULL(?, apellidop),
-          id_clinica = IFNULL(UUID_TO_BIN(?), id_clinica),
-          fecha_creacion = IFNULL(?, fecha_creacion)
+          id_clinica = IFNULL(UUID_TO_BIN(?), id_clinica)
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [nombre, apellidop, id_clinica, fecha_creacion, id]
+        [nombre, apellidop, id_clinica, id]
       );
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Usuario no encontrado para actualizar, al registrarse"});
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM usuarios WHERE BIN_TO_UUID(id) = ?"
-        ,[id]);
+
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM usuarios WHERE BIN_TO_UUID(id) = ?",[id]);
 
       //NOTA: No se registra este evento, ya que el usuario está creando su clinica y sólo actualizó su nombre real
       //registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'usuarios', fecha_creacion)
+      console.log("Usuario actualizado")
   
       res.json(rows[0]);
     } catch (error) {
+      console.log("Error al actualizar")
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al actualizar la información del usuario, (al registrarse)" });
     }

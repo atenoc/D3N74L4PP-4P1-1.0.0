@@ -13,7 +13,7 @@ export const login = async (req, res) => {
         const ipOrigen = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         console.log("ipOrigen:: "+ipOrigen)
 
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, fecha_creacion FROM usuarios WHERE correo = ? ", [correo]);
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol FROM usuarios WHERE correo = ? ", [correo]);
 
         if (rows.length <= 0) {
             console.log("Usuario no encontrado | seguridad controller")
