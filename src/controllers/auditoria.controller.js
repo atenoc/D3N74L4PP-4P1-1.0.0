@@ -120,3 +120,29 @@ export const fechaActualizacionRegistro = async (id_registro) => {
     throw error; 
   }
 };
+
+
+export const getAccesoByIdUsuario = async (req, res) => {
+  try {
+    //console.log(req.body)
+    const { id } = req.params;
+
+    const [rows] = await pool.query(`
+      SELECT 
+	      id, BIN_TO_UUID(id_usuario)id_usuario, ip_origen, estado, DATE_FORMAT(fecha_evento,'%d/%m/%Y %H:%i:%s') AS fecha_evento
+      FROM accesos
+      WHERE BIN_TO_UUID(id_usuario) = ? 
+      ORDER BY id DESC LIMIT 1 OFFSET 1`
+      ,[id]);
+
+    if (rows.length <= 0) {
+      console.log("Id no encontrado")
+      return res.status(404).json({ message: "Id usuario no encontrado" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: "Ocurrió un error al obtener la fecha del acceso" });
+  }
+};

@@ -16,6 +16,7 @@ import tratamientosRoutes from "./routes/tratamientos.routes.js";
 import seguimientosRoutes from "./routes/seguimientos.routes.js";
 import planesRoutes from "./routes/planes.routes.js";
 import uploadsRoutes from "./routes/uploads.routes.js";
+import auditoriaRoutes from "./routes/auditoria.routes.js";
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use("/api", tratamientosRoutes);
 app.use("/api", seguimientosRoutes);
 app.use("/api", planesRoutes);
 app.use("/api", uploadsRoutes);
+app.use("/api", auditoriaRoutes);
 
 app.use((req, res, next) => {
   res.status(404).json({ message: "End point no encontrado" });

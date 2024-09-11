@@ -1,5 +1,5 @@
 import { pool } from "../db.js";
-import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../utils/eventosServices.js";
+import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
 
 export const createCentro = async (req, res) => {
   try {

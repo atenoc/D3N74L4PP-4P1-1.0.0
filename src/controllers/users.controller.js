@@ -1,7 +1,7 @@
 import { pool } from "../db.js";
 import { esUUID } from "../utils/validacionUUID.js";
 import bcrypt from "bcrypt";
-import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../utils/eventosServices.js";
+import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
 
 export const createUser = async (req, res) => {
   try {

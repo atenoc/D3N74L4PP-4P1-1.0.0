@@ -2,7 +2,7 @@ import { pool } from "../db.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { getDecryptedPassword } from "../utils/encriptacion.js";
-import { registroAcceso } from "../utils/eventosServices.js";
+import { registroAcceso } from "../controllers/auditoria.controller.js";
 
 export const login = async (req, res) => {
     try {
