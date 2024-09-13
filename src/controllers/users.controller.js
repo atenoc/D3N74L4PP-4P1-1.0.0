@@ -1,12 +1,12 @@
 import { pool } from "../db.js";
 import { esUUID } from "../utils/validacionUUID.js";
 import bcrypt from "bcrypt";
-import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
+import { registroAuditoria, getUsuarioCreadorRegistro, getFechaCreacionRegistro, getUsuarioActualizoRegistro, getFechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
 
 export const createUser = async (req, res) => {
   try {
     console.log("CREAR Usuario")
-    console.log(req.body);
+    //console.log(req.body);
     const {
       correo, llave, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_clinica, id_usuario_creador, fecha_creacion
     } = req.body;
@@ -43,6 +43,7 @@ export const createUser = async (req, res) => {
     }
     const { id } = idResult[0];
 
+    // ------------------------------------- REGISTRO
     registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'usuarios', fecha_creacion)
 
     res.status(201).json({ id, correo, llave, rol, id_titulo, nombre, apellidop, apellidom, id_especialidad, telefono, fecha_creacion, id_usuario_creador, id_clinica });
@@ -216,10 +217,10 @@ export const getUser = async (req, res) => {
       //console.log(req.body)
       const { id } = req.params;
 
-      const usuarioCreador = await usuarioCreadorRegistro(id);
-      const fechaCreacion = await fechaCreacionRegistro(id);
-      const usuarioActualizo = await usuarioActualizoRegistro(id);
-      const fechaActualizacion = await fechaActualizacionRegistro(id);
+      const usuarioCreador = await getUsuarioCreadorRegistro(id);
+      const fechaCreacion = await getFechaCreacionRegistro(id);
+      const usuarioActualizo = await getUsuarioActualizoRegistro(id);
+      const fechaActualizacion = await getFechaActualizacionRegistro(id);
 
     const [rows] = await pool.query(`
       SELECT 
@@ -262,7 +263,7 @@ export const getUser = async (req, res) => {
 
   export const updateUser = async (req, res) => {
     try {
-      console.log(req.body)
+      //console.log(req.body)
       const { id } = req.params;
       const { correo, rol, titulo, nombre, apellidop, apellidom, especialidad, telefono, id_usuario_actualizo, id_clinica, fecha_actualizacion } = req.body;
       console.log("correo:: "+correo)
@@ -294,6 +295,7 @@ export const getUser = async (req, res) => {
         return res.status(500).json({ message: "Failed to update user" });
       }
 
+      // ------------------------------------- REGISTRO
       registroAuditoria(id, id_usuario_actualizo, id_clinica, 'UPDATE', 'usuarios', fecha_actualizacion)
   
       res.json(rows[0]);
@@ -311,7 +313,7 @@ export const getUser = async (req, res) => {
       const { nombre, apellidop, id_clinica } = req.body;
 
       console.log("id actualizar::: "+id)
-      console.log(req.body)
+      //console.log(req.body)
   
       const [result] = await pool.query(
         `UPDATE usuarios 
@@ -348,7 +350,7 @@ export const getUser = async (req, res) => {
       const { id } = req.params;
       const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.body;
       console.log("ELIMINAR USUARIO")
-      console.log(req.body)
+      //console.log(req.body)
       console.log("id:: "+id)
       console.log(fecha_eliminacion)
 
@@ -357,6 +359,7 @@ export const getUser = async (req, res) => {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
 
+      // ------------------------------------- REGISTRO
       registroAuditoria(id, id_usuario_elimino, id_clinica, 'DELETE', 'usuarios', fecha_eliminacion)
   
       res.json({id});

@@ -1,5 +1,5 @@
 import { pool } from "../db.js";
-import { registroAuditoria, usuarioCreadorRegistro, fechaCreacionRegistro, usuarioActualizoRegistro, fechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
+import { registroAuditoria, getUsuarioCreadorRegistro, getFechaCreacionRegistro, getUsuarioActualizoRegistro, getFechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
 
 export const createCentro = async (req, res) => {
   try {
@@ -47,10 +47,10 @@ export const getCentro = async (req, res) => {
       //console.log(req.body)
       const { id } = req.params;
 
-      const usuarioCreador = await usuarioCreadorRegistro(id);
-      const fechaCreacion = await fechaCreacionRegistro(id);
-      const usuarioActualizo = await usuarioActualizoRegistro(id);
-      const fechaActualizacion = await fechaActualizacionRegistro(id);
+      const usuarioCreador = await getUsuarioCreadorRegistro(id);
+      const fechaCreacion = await getFechaCreacionRegistro(id);
+      const usuarioActualizo = await getUsuarioActualizoRegistro(id);
+      const fechaActualizacion = await getFechaActualizacionRegistro(id);
 
       const [rows] = await pool.query(`
         SELECT 
