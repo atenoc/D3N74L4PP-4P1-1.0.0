@@ -53,7 +53,9 @@ export const getUserByCorreo = async (req, res) => {
     console.log("INICIANDO...................................................................................................................................................................... ")
     try {
       //console.log(req.body)
-      const {correo } = req.params;
+      //const {correo } = req.params;
+      const { correo } = req.body;
+      console.log("Correo Login: " + correo)
       const [rows] = await pool.query(`
       SELECT 
         BIN_TO_UUID(id) id,
@@ -82,9 +84,9 @@ export const getUserByCorreo = async (req, res) => {
 // validarUsuarioActivo - id usuario / correo // After Login 3
 export const validarUsuarioActivo = async (req, res) => {
     try {
-      console.log("Validando ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+      console.log("Validando ------------------------------------------------------------------------------------------------------------------------------------------");
       //console.log(req.body)
-      const {id, correo, id_clinica } = req.params;
+      const {id, correo, id_clinica } = req.body;
       const [rows] = await pool.query(`
       SELECT 
         BIN_TO_UUID(id) id,

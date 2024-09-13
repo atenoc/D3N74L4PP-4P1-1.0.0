@@ -80,7 +80,7 @@ export const getUsersOnlySop = async (req, res) => {
     ORDER BY u.autoincremental DESC 
     `);
 
-    console.log(rows)
+    //console.log(rows)
 
     res.json(rows);
   } catch (error) {
@@ -252,7 +252,7 @@ export const getUser = async (req, res) => {
       if (rows.length <= 0) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-      console.log(rows[0])
+      //console.log(rows[0])
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
@@ -348,7 +348,7 @@ export const getUser = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.body;
+      const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.query;
       console.log("ELIMINAR USUARIO")
       //console.log(req.body)
       console.log("id:: "+id)

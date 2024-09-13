@@ -31,6 +31,6 @@ router.patch(path+"/:id", verificarToken, updateUser);
 router.patch(path+"/usuario/:id/registro", verificarToken, updateUserRegister);
 
 // DELETE One
-router.put(path+"/:id", verificarToken, deleteUser);
+router.delete(path+"/:id", verificarToken, deleteUser);
 
 export default router;

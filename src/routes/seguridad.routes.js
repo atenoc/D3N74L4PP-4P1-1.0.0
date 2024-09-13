@@ -16,10 +16,10 @@ const path = "/seguridad"
 router.post(path+'/login', login)
 
 // getUserByCorreo - After Login 2
-router.get(path+"/usuario/correo/:correo", verificarToken, getUserByCorreo) 
+router.post(path+"/usuario/correo", verificarToken, getUserByCorreo) 
 
 // verificar usuario activo - After Login 3 - Sidebar/Header/Footer
-router.get(path+"/verificar/usuario/:id/correo/:correo/clinica/:id_clinica", verificarToken, validarUsuarioActivo) 
+router.post(path+"/verificar/usuario", verificarToken, validarUsuarioActivo) 
 
 // old
 //router.get(path+'/restringido', verificarToken, getRestringido)

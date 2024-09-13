@@ -46,13 +46,14 @@ export const getAccesoByIdUsuario = async (req, res) => {
 
 export const registroAuditoria = async (id_registro, id_usuario, id_clinica, tipo_evento, tabla_afectada, fecha_evento) => {
   try {
-    console.log("Registro Auditoria...")
+    console.log("------------------------------------------------------------------------------------------------------------Registro Auditoria...")
     console.log("id_registro: "+id_registro)
     console.log("id_usuario: "+id_usuario)
     console.log("id_clinica: "+id_clinica)
     console.log("tipo_evento: "+tipo_evento)
     console.log("tabla_afectada: "+tabla_afectada)
     console.log("fecha_evento: "+fecha_evento)
+    console.log("------------------------------------------------------------------------------------------------------------Registro Auditoria")
 
     const [result] = await pool.execute(`
       INSERT INTO auditoria (id_registro, id_usuario, id_clinica, tipo_evento, tabla_afectada, fecha_evento) VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?,?,?)`,
