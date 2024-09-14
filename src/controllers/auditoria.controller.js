@@ -78,7 +78,7 @@ export const getUsuarioCreadorRegistro = async (id_registro) => {
     );
 
     if (rows.length === 0) {
-      console.log("No se encontró ninguna id para el registro: "+id_registro);
+      console.log("X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X No se encontró ningún 'USUARIO CREADOR' para el registro: "+id_registro);
       return null; 
     }
 
@@ -105,7 +105,7 @@ export const getFechaCreacionRegistro = async (id_registro) => {
     );
 
     if (rows.length === 0) {
-      console.log("No se encontró ninguna fecha_evento para el registro: "+id_registro);
+      console.log("X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X No se encontró ninguna 'FECHA CREACION' para el registro: "+id_registro);
       return null; 
     }
 

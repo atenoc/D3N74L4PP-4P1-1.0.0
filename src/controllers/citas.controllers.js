@@ -278,7 +278,7 @@ export const createCita = async (req, res) => {
       ORDER BY c.autoincremental DESC
       `, [id_paciente]);
 
-      console.log(rowsCitas)
+      //console.log(rowsCitas)
       res.json(rowsCitas);
   
     } catch (error) {

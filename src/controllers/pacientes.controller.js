@@ -79,7 +79,7 @@ export const getPacientesPaginationByIdClinica = async (req, res) => {
     ORDER BY ${orderByClause}
     LIMIT ? OFFSET ?
     `, [id_clinica, +size, +offset]);
-    console.log([rows])
+    //console.log([rows])
     const [totalPagesData] = await pool.query('SELECT count(*) AS count FROM pacientes WHERE BIN_TO_UUID(id_clinica) = ?', [id_clinica]);
     const totalPages = Math.ceil(+totalPagesData[0]?.count / size);
     const totalElements = +totalPagesData[0]?.count;
@@ -133,7 +133,7 @@ export const getPacienteById = async (req, res) => {
     if (rows.length <= 0) {
       return res.status(404).json({ message: "Paciente no encontrado" });
     }
-    console.log(rows[0])
+    //console.log(rows[0])
     res.json(rows[0]);
   } catch (error) {
     console.log(error)

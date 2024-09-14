@@ -77,7 +77,8 @@ export const getCentro = async (req, res) => {
         console.log("Centro no encontrado")
         return res.status(404).json({ message: "Centro no encontrado" });
       }
-  
+      
+      console.log(rows[0])
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
