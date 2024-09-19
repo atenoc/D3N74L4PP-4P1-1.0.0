@@ -1,5 +1,11 @@
 import { pool } from "../db.js";
-import { registroAuditoria, getUsuarioCreadorRegistro, getFechaCreacionRegistro, getUsuarioActualizoRegistro, getFechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
+import { 
+  registroAuditoria, 
+  getUsuarioCreadorRegistro, 
+  getFechaCreacionRegistro, 
+  getUsuarioActualizoRegistro, 
+  getFechaActualizacionRegistro 
+} from "../controllers/auditoria.controller.js";
 
 export const createCentro = async (req, res) => {
   try {
@@ -78,7 +84,7 @@ export const getCentro = async (req, res) => {
         return res.status(404).json({ message: "Centro no encontrado" });
       }
       
-      console.log(rows[0])
+      //console.log(rows[0])
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
@@ -169,7 +175,6 @@ export const getCentroByIdUserSuAdmin = async (req, res) => {
     }
 
     const id_clinica = result[0].id_clinica
-
 
     const [rows] = await pool.query(`
       SELECT * FROM clinicas WHERE BIN_TO_UUID(id) = ?`

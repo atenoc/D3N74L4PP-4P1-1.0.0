@@ -1,5 +1,11 @@
 import { pool } from "../db.js";
-import { registroAuditoria, getUsuarioCreadorRegistro, getFechaCreacionRegistro, getUsuarioActualizoRegistro, getFechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
+import { 
+  registroAuditoria, 
+  getUsuarioCreadorRegistro, 
+  getFechaCreacionRegistro, 
+  getUsuarioActualizoRegistro, 
+  getFechaActualizacionRegistro 
+} from "../controllers/auditoria.controller.js";
 
 export const createPaciente = async (req, res) => {
     try {

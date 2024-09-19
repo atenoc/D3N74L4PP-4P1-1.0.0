@@ -1,4 +1,12 @@
 import { pool } from "../db.js";
+import { 
+  registroAuditoria, 
+  getUsuarioCreadorRegistro, 
+  getFechaCreacionRegistro, 
+  getUsuarioActualizoRegistro, 
+  getFechaActualizacionRegistro 
+} from "../controllers/auditoria.controller.js";
+
 
 export const createDiagnostico = async (req, res) => {
     try {
@@ -8,9 +16,9 @@ export const createDiagnostico = async (req, res) => {
     
         // insertar el nuevo registro
         const [result] = await pool.execute(`
-          INSERT INTO diagnosticos (id, descripcion_problema, codigo_diagnostico, evidencias, id_paciente, id_clinica, id_usuario_creador, fecha_creacion) 
-          VALUES (UUID_TO_BIN(UUID()),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-          [descripcion_problema, codigo_diagnostico, evidencias, id_paciente, id_clinica, id_usuario_creador, fecha_creacion]
+          INSERT INTO diagnosticos (id, descripcion_problema, codigo_diagnostico, evidencias, id_paciente, id_clinica) 
+          VALUES (UUID_TO_BIN(UUID()),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
+          [descripcion_problema, codigo_diagnostico, evidencias, id_paciente, id_clinica]
         );
     
         if (result.affectedRows === 1) {
@@ -21,10 +29,8 @@ export const createDiagnostico = async (req, res) => {
           SELECT BIN_TO_UUID(id) as id FROM diagnosticos 
           WHERE codigo_diagnostico = ? 
             AND BIN_TO_UUID(id_paciente) = ?
-            AND BIN_TO_UUID(id_clinica) = ?
-            AND BIN_TO_UUID(id_usuario_creador) = ?
-            AND fecha_creacion = ?`, 
-          [codigo_diagnostico, id_paciente, id_clinica, id_usuario_creador, fecha_creacion]);
+            AND BIN_TO_UUID(id_clinica) = ?`, 
+          [codigo_diagnostico, id_paciente, id_clinica]);
 
         if (!idResult.length) {
           return res.status(500).json({ message: "No se encontró el ID del diagnóstico insertado" });
@@ -32,7 +38,10 @@ export const createDiagnostico = async (req, res) => {
 
         const { id } = idResult[0];
     
-        res.status(201).json({ id, descripcion_problema, codigo_diagnostico, evidencias, id_paciente, id_clinica, id_usuario_creador, fecha_creacion });
+        // ------------------------------------- REGISTRO
+        registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'diagnosticos', fecha_creacion)
+
+        res.status(201).json({ id, id_paciente, id_clinica, id_usuario_creador, fecha_creacion });
       
     } catch (error) {
       console.log(error)
@@ -42,9 +51,10 @@ export const createDiagnostico = async (req, res) => {
 
 
 export const getDiagnosticosByIpPaciente = async (req, res) => {
-  const { id } = req.params;
-  console.log("id Paciente:: "+id)
   try {
+    const { id } = req.params;
+    console.log("id Paciente:: "+id)
+
     const [rows] = await pool.query(`
     SELECT 
       ROW_NUMBER() OVER (ORDER BY d.autoincremental DESC) AS contador,
@@ -53,19 +63,20 @@ export const getDiagnosticosByIpPaciente = async (req, res) => {
       d.codigo_diagnostico, 
       d.evidencias, 
       BIN_TO_UUID(d.id_paciente) AS id_paciente, 
-      BIN_TO_UUID(d.id_clinica) AS id_clinica, 
-      BIN_TO_UUID(d.id_usuario_creador) AS id_usuario_creador, 
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_creador)) AS nombre_usuario_creador,
-      DATE_FORMAT(d.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      BIN_TO_UUID(d.id_usuario_actualizo) AS id_usuario_actualizo, 
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_actualizo)) AS nombre_usuario_actualizo,
-      DATE_FORMAT(d.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') AS fecha_actualizacion
+      BIN_TO_UUID(d.id_clinica) AS id_clinica,
+      (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
+        WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(d.id)
+      AND tipo_evento='CREATE') AS fecha_creacion,
+      (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
+        WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(d.id)
+      AND tipo_evento='UPDATE' ORDER BY id DESC LIMIT 1) AS fecha_actualizacion
+
     FROM diagnosticos d
     WHERE BIN_TO_UUID(d.id_paciente) = ?
     ORDER BY d.autoincremental DESC
     `, [id]);
 
-    console.log(rows)
+    //console.log(rows)
     res.json(rows);
   } catch (error) {
     console.log(error)
@@ -78,23 +89,29 @@ export const getDiagnostico = async (req, res) => {
   try {
     //console.log(req.body)
     const { id } = req.params;
-      const [rows] = await pool.query(`
-      SELECT 
-        BIN_TO_UUID(d.id) AS id, 
-        d.descripcion_problema, 
-        d.codigo_diagnostico, 
-        d.evidencias, 
-        BIN_TO_UUID(d.id_paciente) AS id_paciente, 
-        BIN_TO_UUID(d.id_clinica) AS id_clinica, 
-        BIN_TO_UUID(d.id_usuario_creador) AS id_usuario_creador, 
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_creador)) AS nombre_usuario_creador, 
-        DATE_FORMAT(d.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
-        BIN_TO_UUID(d.id_usuario_actualizo) AS id_usuario_actualizo, 
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(d.id_usuario_actualizo)) AS nombre_usuario_actualizo,
-        DATE_FORMAT(d.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') as fecha_actualizacion
-      FROM diagnosticos d
-      WHERE BIN_TO_UUID(d.id) = ?`
-      ,[id]);
+
+    const usuarioCreador = await getUsuarioCreadorRegistro(id);
+    const fechaCreacion = await getFechaCreacionRegistro(id);
+    const usuarioActualizo = await getUsuarioActualizoRegistro(id);
+    const fechaActualizacion = await getFechaActualizacionRegistro(id);
+
+    const [rows] = await pool.query(`
+    SELECT 
+      BIN_TO_UUID(d.id) AS id, 
+      d.descripcion_problema, 
+      d.codigo_diagnostico, 
+      d.evidencias, 
+      BIN_TO_UUID(d.id_paciente) AS id_paciente, 
+      BIN_TO_UUID(d.id_clinica) AS id_clinica,
+
+      ? AS nombre_usuario_creador,
+      ? AS fecha_creacion,
+      ? AS nombre_usuario_actualizo,    
+      ? AS fecha_actualizacion
+
+    FROM diagnosticos d
+    WHERE BIN_TO_UUID(d.id) = ?`
+    ,[usuarioCreador, fechaCreacion, usuarioActualizo, fechaActualizacion, id]);
 
     if (rows.length <= 0) {
       return res.status(404).json({ message: "Diagnostico no encontrado" });
@@ -112,25 +129,26 @@ export const updateDiagnostico = async (req, res) => {
   try {
     console.log(req.body)
     const { id } = req.params;
-    const { descripcion_problema, codigo_diagnostico, evidencias, id_usuario_actualizo, fecha_actualizacion } = req.body;
+    const { descripcion_problema, codigo_diagnostico, evidencias, id_usuario_actualizo, id_clinica, fecha_actualizacion } = req.body;
 
     const [result] = await pool.query(
       `UPDATE diagnosticos 
         SET 
         descripcion_problema = IFNULL(?, descripcion_problema), 
         codigo_diagnostico = IFNULL(?, codigo_diagnostico), 
-        evidencias = IFNULL(?, evidencias), 
-        id_usuario_actualizo = IFNULL(UUID_TO_BIN(?), id_usuario_actualizo), 
-        fecha_actualizacion = IFNULL(?, fecha_actualizacion) 
+        evidencias = IFNULL(?, evidencias)
       WHERE 
         BIN_TO_UUID(id) = ?`,
-      [descripcion_problema, codigo_diagnostico, evidencias, id_usuario_actualizo, fecha_actualizacion, id]
+      [descripcion_problema, codigo_diagnostico, evidencias, id]
     );
 
     if (result.affectedRows === 0)
       return res.status(404).json({ message: "Diagnostico no encontrado" });
     
     const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM diagnosticos WHERE BIN_TO_UUID(id) = ?", [id]);
+
+    // ------------------------------------- REGISTRO
+    registroAuditoria(id, id_usuario_actualizo, id_clinica, 'UPDATE', 'diagnosticos', fecha_actualizacion)
 
     res.json(rows[0]);
   } catch (error) {
@@ -144,10 +162,14 @@ export const deleteDiagnostico = async (req, res) => {
   try {
     //console.log(req.body)
     const { id } = req.params;
+    const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.query;
     const [rows] = await pool.query("DELETE FROM diagnosticos WHERE id = uuid_to_bin(?)", [id]);
     if (rows.affectedRows <= 0) {
       return res.status(404).json({ message: "Diagnostico no encontrado" });
     }
+
+    // ------------------------------------- REGISTRO
+    registroAuditoria(id, id_usuario_elimino, id_clinica, 'DELETE', 'diagnosticos', fecha_eliminacion)
 
     res.json({id});
   } catch (error) {

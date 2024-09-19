@@ -1,6 +1,12 @@
 import { pool } from "../db.js";
 import  moment  from "moment";
-import { registroAuditoria, getUsuarioCreadorRegistro, getFechaCreacionRegistro, getUsuarioActualizoRegistro, getFechaActualizacionRegistro } from "../controllers/auditoria.controller.js";
+import { 
+  registroAuditoria, 
+  getUsuarioCreadorRegistro, 
+  getFechaCreacionRegistro, 
+  getUsuarioActualizoRegistro, 
+  getFechaActualizacionRegistro 
+} from "../controllers/auditoria.controller.js";
 
 export const createEvento = async (req, res) => {
   try {
@@ -105,7 +111,9 @@ export const createCita = async (req, res) => {
         p.apellidop,
         p.apellidom,
         p.edad,
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) 
+          FROM usuarios 
+          WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico
 
       FROM citas c
       LEFT JOIN pacientes p ON c.id_paciente = p.id
@@ -170,7 +178,9 @@ export const createCita = async (req, res) => {
         p.telefono,
         BIN_TO_UUID(c.id_paciente) AS id_paciente,
         BIN_TO_UUID(c.id_usuario_medico) AS id_usuario_medico,
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico,
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) 
+          FROM usuarios 
+          WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico,
 
         ? AS nombre_usuario_creador,
         ? AS fecha_creacion,
@@ -271,7 +281,9 @@ export const createCita = async (req, res) => {
         p.nombre,
         p.apellidop,
         p.apellidom,
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) 
+          FROM usuarios 
+          WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico
       FROM citas c
       LEFT JOIN pacientes p ON c.id_paciente = p.id
       WHERE BIN_TO_UUID(c.id_paciente) = ? 
