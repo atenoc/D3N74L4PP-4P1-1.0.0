@@ -1,4 +1,11 @@
 import { pool } from "../db.js";
+import { 
+  registroAuditoria, 
+  getUsuarioCreadorRegistro, 
+  getFechaCreacionRegistro, 
+  getUsuarioActualizoRegistro, 
+  getFechaActualizacionRegistro 
+} from "../controllers/auditoria.controller.js";
 
 export const createTratamiento = async (req, res) => {
     try {
@@ -7,9 +14,9 @@ export const createTratamiento = async (req, res) => {
         const { tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_paciente, id_clinica, id_usuario_creador, fecha_creacion} = req.body;
     
         const [result] = await pool.execute(`
-          INSERT INTO tratamientos (id, tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_paciente, id_clinica, id_usuario_creador, fecha_creacion) 
-          VALUES (UUID_TO_BIN(UUID()),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-          [tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_paciente, id_clinica, id_usuario_creador, fecha_creacion]
+          INSERT INTO tratamientos (id, tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_paciente, id_clinica) 
+          VALUES (UUID_TO_BIN(UUID()),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?))`,
+          [tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_paciente, id_clinica]
         );
     
         if (result.affectedRows === 1) {
@@ -19,10 +26,8 @@ export const createTratamiento = async (req, res) => {
         const [idResult] = await pool.execute(`
           SELECT BIN_TO_UUID(id) as id FROM tratamientos 
           WHERE BIN_TO_UUID(id_paciente) = ?
-            AND BIN_TO_UUID(id_clinica) = ?
-            AND BIN_TO_UUID(id_usuario_creador) = ?
-            AND fecha_creacion = ?`, 
-          [id_paciente, id_clinica, id_usuario_creador, fecha_creacion]);
+            AND BIN_TO_UUID(id_clinica) = ?`, 
+          [id_paciente, id_clinica]);
 
         if (!idResult.length) {
           return res.status(500).json({ message: "No se encontró el ID del tratamiento insertado" });
@@ -30,7 +35,10 @@ export const createTratamiento = async (req, res) => {
 
         const { id } = idResult[0];
     
-        res.status(201).json({ id, tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_paciente, id_clinica, id_usuario_creador, fecha_creacion });
+        // ------------------------------------- REGISTRO
+        registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'tratamientos', fecha_creacion)
+
+        res.status(201).json({ id, id_paciente, id_clinica, id_usuario_creador, fecha_creacion });
       
     } catch (error) {
       console.log(error)
@@ -52,12 +60,13 @@ export const getTratamientosByIdPaciente = async (req, res) => {
       t.costo_estimado, 
       BIN_TO_UUID(t.id_paciente) AS id_paciente, 
       BIN_TO_UUID(t.id_clinica) AS id_clinica, 
-      BIN_TO_UUID(t.id_usuario_creador) AS id_usuario_creador, 
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(t.id_usuario_creador)) AS nombre_usuario_creador,
-      DATE_FORMAT(t.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion,
-      BIN_TO_UUID(t.id_usuario_actualizo) AS id_usuario_actualizo, 
-      (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(t.id_usuario_actualizo)) AS nombre_usuario_actualizo,
-      DATE_FORMAT(t.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') AS fecha_actualizacion
+      (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
+        WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(t.id)
+        AND tipo_evento='CREATE') AS fecha_creacion,
+      (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
+        WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(t.id)
+        AND tipo_evento='UPDATE' ORDER BY id DESC LIMIT 1) AS fecha_actualizacion
+
     FROM tratamientos t
     WHERE BIN_TO_UUID(t.id_paciente) = ?
     ORDER BY t.autoincremental DESC
@@ -76,23 +85,29 @@ export const getTratamiento = async (req, res) => {
   try {
     //console.log(req.body)
     const { id } = req.params;
-      const [rows] = await pool.query(`
-      SELECT 
-        BIN_TO_UUID(t.id) AS id, 
-        t.tratamiento_propuesto, 
-        t.medicamentos_prescritos, 
-        t.costo_estimado, 
-        BIN_TO_UUID(t.id_paciente) AS id_paciente, 
-        BIN_TO_UUID(t.id_clinica) AS id_clinica, 
-        BIN_TO_UUID(t.id_usuario_creador) AS id_usuario_creador, 
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(t.id_usuario_creador)) AS nombre_usuario_creador, 
-        DATE_FORMAT(t.fecha_creacion, '%d/%m/%Y %H:%i:%s') as fecha_creacion,
-        BIN_TO_UUID(t.id_usuario_actualizo) AS id_usuario_actualizo, 
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(t.id_usuario_actualizo)) AS nombre_usuario_actualizo,
-        DATE_FORMAT(t.fecha_actualizacion, '%d/%m/%Y %H:%i:%s') as fecha_actualizacion
-      FROM tratamientos t
-      WHERE BIN_TO_UUID(t.id) = ?`
-      ,[id]);
+
+    const usuarioCreador = await getUsuarioCreadorRegistro(id);
+    const fechaCreacion = await getFechaCreacionRegistro(id);
+    const usuarioActualizo = await getUsuarioActualizoRegistro(id);
+    const fechaActualizacion = await getFechaActualizacionRegistro(id);
+
+    const [rows] = await pool.query(`
+    SELECT 
+      BIN_TO_UUID(t.id) AS id, 
+      t.tratamiento_propuesto, 
+      t.medicamentos_prescritos, 
+      t.costo_estimado, 
+      BIN_TO_UUID(t.id_paciente) AS id_paciente, 
+      BIN_TO_UUID(t.id_clinica) AS id_clinica,
+      
+      ? AS nombre_usuario_creador,
+      ? AS fecha_creacion,
+      ? AS nombre_usuario_actualizo,    
+      ? AS fecha_actualizacion
+      
+    FROM tratamientos t
+    WHERE BIN_TO_UUID(t.id) = ?`
+    ,[usuarioCreador, fechaCreacion, usuarioActualizo, fechaActualizacion, id]);
 
     if (rows.length <= 0) {
       return res.status(404).json({ message: "Tratamiento no encontrado" });
@@ -110,25 +125,26 @@ export const updateTratamiento = async (req, res) => {
   try {
     console.log(req.body)
     const { id } = req.params;
-    const { tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_usuario_actualizo, fecha_actualizacion } = req.body;
+    const { tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_usuario_actualizo, id_clinica, fecha_actualizacion } = req.body;
 
     const [result] = await pool.query(
       `UPDATE tratamientos 
         SET 
         tratamiento_propuesto = IFNULL(?, tratamiento_propuesto), 
         medicamentos_prescritos = IFNULL(?, medicamentos_prescritos), 
-        costo_estimado = IFNULL(?, costo_estimado), 
-        id_usuario_actualizo = IFNULL(UUID_TO_BIN(?), id_usuario_actualizo), 
-        fecha_actualizacion = IFNULL(?, fecha_actualizacion) 
+        costo_estimado = IFNULL(?, costo_estimado)
       WHERE 
         BIN_TO_UUID(id) = ?`,
-      [tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id_usuario_actualizo, fecha_actualizacion, id]
+      [tratamiento_propuesto, medicamentos_prescritos, costo_estimado, id]
     );
 
     if (result.affectedRows === 0)
       return res.status(404).json({ message: "Tratamiento no encontrado" });
     
     const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id FROM tratamientos WHERE BIN_TO_UUID(id) = ?", [id]);
+
+    // ------------------------------------- REGISTRO
+    registroAuditoria(id, id_usuario_actualizo, id_clinica, 'UPDATE', 'tratamientos', fecha_actualizacion)
 
     res.json(rows[0]);
   } catch (error) {
@@ -140,11 +156,17 @@ export const updateTratamiento = async (req, res) => {
 
 export const deleteTratamiento = async (req, res) => {
   try {
+
     const { id } = req.params;
+    const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.query;
+
     const [rows] = await pool.query("DELETE FROM tratamientos WHERE id = uuid_to_bin(?)", [id]);
     if (rows.affectedRows <= 0) {
       return res.status(404).json({ message: "Tratamientos no encontrado" });
     }
+
+    // ------------------------------------- REGISTRO
+    registroAuditoria(id, id_usuario_elimino, id_clinica, 'DELETE', 'tratamientos', fecha_eliminacion)
 
     res.json({id});
   } catch (error) {

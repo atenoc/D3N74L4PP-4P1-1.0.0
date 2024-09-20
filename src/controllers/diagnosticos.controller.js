@@ -66,10 +66,10 @@ export const getDiagnosticosByIpPaciente = async (req, res) => {
       BIN_TO_UUID(d.id_clinica) AS id_clinica,
       (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
         WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(d.id)
-      AND tipo_evento='CREATE') AS fecha_creacion,
+        AND tipo_evento='CREATE') AS fecha_creacion,
       (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
         WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(d.id)
-      AND tipo_evento='UPDATE' ORDER BY id DESC LIMIT 1) AS fecha_actualizacion
+        AND tipo_evento='UPDATE' ORDER BY id DESC LIMIT 1) AS fecha_actualizacion
 
     FROM diagnosticos d
     WHERE BIN_TO_UUID(d.id_paciente) = ?
@@ -163,6 +163,7 @@ export const deleteDiagnostico = async (req, res) => {
     //console.log(req.body)
     const { id } = req.params;
     const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.query;
+    
     const [rows] = await pool.query("DELETE FROM diagnosticos WHERE id = uuid_to_bin(?)", [id]);
     if (rows.affectedRows <= 0) {
       return res.status(404).json({ message: "Diagnostico no encontrado" });
