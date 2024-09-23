@@ -53,7 +53,7 @@ export const createDiagnostico = async (req, res) => {
 export const getDiagnosticosByIpPaciente = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("id Paciente:: "+id)
+    console.log("id Paciente:: " + id);
 
     const [diagnosticos] = await pool.query(`
     SELECT 
@@ -63,60 +63,45 @@ export const getDiagnosticosByIpPaciente = async (req, res) => {
       d.codigo_diagnostico, 
       d.evidencias, 
       BIN_TO_UUID(d.id_paciente) AS id_paciente, 
-      BIN_TO_UUID(d.id_clinica) AS id_clinica,
+      BIN_TO_UUID(d.id_clinica),
       (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
         WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(d.id)
         AND tipo_evento='CREATE') AS fecha_creacion,
       (SELECT DATE_FORMAT(fecha_evento, '%d/%m/%Y %H:%i:%s') FROM auditoria 
         WHERE BIN_TO_UUID(id_registro) = BIN_TO_UUID(d.id)
         AND tipo_evento='UPDATE' ORDER BY id DESC LIMIT 1) AS fecha_actualizacion
-
     FROM diagnosticos d
     WHERE BIN_TO_UUID(d.id_paciente) = ?
     ORDER BY d.autoincremental DESC
     `, [id]);
 
-    // Obteniendo las imágenes relacionadas
+    // Obteniendo las imágenes relacionadas para cada diagnóstico
+    const diagnosticosConImagenes = await Promise.all(diagnosticos.map(async (diagnostico) => {
     const [imagenes] = await pool.query(`
       SELECT 
         BIN_TO_UUID(id) AS id, 
         url, 
-        descripcion, 
-        BIN_TO_UUID(id_diagnostico) AS id_diagnostico
-      FROM imagenes
-      WHERE BIN_TO_UUID(id_paciente) = ?
-    `, [id]);
+        descripcion 
+      FROM imagenes 
+      WHERE BIN_TO_UUID(id_diagnostico) = ?
+    `, [diagnostico.id]);
 
-    console.log("Imagenes por diagnostico:")
+    console.log("imagenes::")
     console.log(imagenes)
 
-    // Agrupando imágenes por diagnóstico
-    const imagenesPorDiagnostico = {};
-    imagenes.forEach(imagen => {
-      const idDiagnostico = imagen.id_diagnostico;
-      if (!imagenesPorDiagnostico[idDiagnostico]) {
-        imagenesPorDiagnostico[idDiagnostico] = [];
-      }
-      imagenesPorDiagnostico[idDiagnostico].push(imagen);
-    });
-
-    // Asociando imágenes a cada diagnóstico
-    const diagnosticosConImagenes = diagnosticos.map(diagnostico => {
-      return {
+    return {
         ...diagnostico,
-        imagenes: imagenesPorDiagnostico[diagnostico.id] || []
+        imagenes: imagenes // Agregar las imágenes específicas del diagnóstico
       };
-    });
+    }));
 
     res.json(diagnosticosConImagenes);
-
-    //console.log(rows)
-    //res.json(rows);
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({ message: "Ocurrió un error al obtener los diagnosticos del paciente" });
+    console.log(error);
+    return res.status(500).json({ message: "Ocurrió un error al obtener los diagnósticos del paciente" });
   }
 };
+
 
 
 export const getDiagnostico = async (req, res) => {
