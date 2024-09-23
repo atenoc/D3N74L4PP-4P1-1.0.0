@@ -55,7 +55,7 @@ export const getDiagnosticosByIpPaciente = async (req, res) => {
     const { id } = req.params;
     console.log("id Paciente:: "+id)
 
-    const [rows] = await pool.query(`
+    const [diagnosticos] = await pool.query(`
     SELECT 
       ROW_NUMBER() OVER (ORDER BY d.autoincremental DESC) AS contador,
       BIN_TO_UUID(d.id) AS id, 
@@ -76,8 +76,42 @@ export const getDiagnosticosByIpPaciente = async (req, res) => {
     ORDER BY d.autoincremental DESC
     `, [id]);
 
+    // Obteniendo las imágenes relacionadas
+    const [imagenes] = await pool.query(`
+      SELECT 
+        BIN_TO_UUID(id) AS id, 
+        url, 
+        descripcion, 
+        BIN_TO_UUID(id_diagnostico) AS id_diagnostico
+      FROM imagenes
+      WHERE BIN_TO_UUID(id_paciente) = ?
+    `, [id]);
+
+    console.log("Imagenes por diagnostico:")
+    console.log(imagenes)
+
+    // Agrupando imágenes por diagnóstico
+    const imagenesPorDiagnostico = {};
+    imagenes.forEach(imagen => {
+      const idDiagnostico = imagen.id_diagnostico;
+      if (!imagenesPorDiagnostico[idDiagnostico]) {
+        imagenesPorDiagnostico[idDiagnostico] = [];
+      }
+      imagenesPorDiagnostico[idDiagnostico].push(imagen);
+    });
+
+    // Asociando imágenes a cada diagnóstico
+    const diagnosticosConImagenes = diagnosticos.map(diagnostico => {
+      return {
+        ...diagnostico,
+        imagenes: imagenesPorDiagnostico[diagnostico.id] || []
+      };
+    });
+
+    res.json(diagnosticosConImagenes);
+
     //console.log(rows)
-    res.json(rows);
+    //res.json(rows);
   } catch (error) {
     console.log(error)
     return res.status(500).json({ message: "Ocurrió un error al obtener los diagnosticos del paciente" });

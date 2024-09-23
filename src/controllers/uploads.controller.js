@@ -5,6 +5,14 @@ import { dirname } from 'path';
 import { pool } from "../db.js";
 import fs from 'fs';
 
+import { 
+  registroAuditoria, 
+  getUsuarioCreadorRegistro, 
+  getFechaCreacionRegistro, 
+  getUsuarioActualizoRegistro, 
+  getFechaActualizacionRegistro 
+} from "../controllers/auditoria.controller.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -47,7 +55,7 @@ const __dirname = path.dirname(__filename);
 export const uploadFiles = async (req, res) => {
   try {
     
-    const { image, filename, descripcion, comentarios, id_paciente, id_diagnostico, id_clinica, id_usuario_creador, fecha_creacion } = req.body;
+    const { image, filename, descripcion, id_paciente, id_diagnostico, id_clinica, id_usuario_creador, fecha_creacion } = req.body;
 
     // Verificar que ambos campos existan
     if (!image || !filename) {
@@ -81,14 +89,30 @@ export const uploadFiles = async (req, res) => {
 
         // Guardamos en bd
         const [result] = await pool.execute(`
-          INSERT INTO imagenes (id, url, descripcion, comentarios, id_paciente, id_diagnostico, id_clinica, id_usuario_creador, fecha_creacion) 
-          VALUES (UUID_TO_BIN(UUID()),?,?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)`,
-          [resultUpload.secure_url, descripcion, comentarios, id_paciente || null, id_diagnostico || null, id_clinica, id_usuario_creador, fecha_creacion]
+          INSERT INTO imagenes (id, url, descripcion, id_paciente, id_diagnostico, id_clinica) 
+          VALUES (UUID_TO_BIN(UUID()),?,?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?))`,
+          [resultUpload.secure_url, descripcion, id_paciente || null, id_diagnostico || null, id_clinica]
         );
 
         if (result.affectedRows === 1) {
-          console.log("'Imagen registrada en bd con éxito")
+          console.log("Imagen registrada en bd con éxito")
         }
+
+        const [idResult] = await pool.execute(`
+          SELECT BIN_TO_UUID(id) as id FROM imagenes 
+          WHERE BIN_TO_UUID(id_diagnostico) = ?
+            AND BIN_TO_UUID(id_paciente) = ?
+            AND BIN_TO_UUID(id_clinica) = ?`, 
+          [id_diagnostico, id_paciente, id_clinica]);
+
+        if (!idResult.length) {
+          return res.status(500).json({ message: "No se encontró el ID del seguimiento insertado" });
+        }
+
+        const { id } = idResult[0];
+
+        // ------------------------------------- REGISTRO
+        registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'imagenes', fecha_creacion)
 
         // Responder con el resultado de Cloudinary
         res.status(200).json({
