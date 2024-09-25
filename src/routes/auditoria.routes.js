@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { verificarToken } from "../controllers/verificarToken.js";
 import {
-    getAccesoByIdUsuario
+    getAccesoByIdUsuario,
+    getBitacoraByIdClinica
 } from "../controllers/auditoria.controller.js";
 
 const router = Router();
-const path = "/auditoria/acceso"
+const path = "/auditoria"
 
-router.get(path+"/:id", verificarToken, getAccesoByIdUsuario);
+router.get(path+"/acceso/:id", verificarToken, getAccesoByIdUsuario);
+router.get(path+"/bitacora/:id_clinica", verificarToken, getBitacoraByIdClinica);
 
 export default router;
