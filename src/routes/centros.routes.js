@@ -6,7 +6,7 @@ import {
   createCentro,
   updateCentro,
   deleteCentro,
-  getCentroByIdUsuario
+  getCentroByIdUserSuAdmin
 } from "../controllers/centros.controller.js";
 
 const router = Router();
@@ -25,10 +25,10 @@ router.get(path+"/:id", verificarToken, getCentro);
 router.patch(path+"/:id", verificarToken, updateCentro);
 
 // DELETE One
-router.delete(path+"/:id", verificarToken, deleteCentro);
+router.put(path+"/:id", verificarToken, deleteCentro);
 
 // GET One By
-router.get(path+"/usuario/:id_usuario", verificarToken, getCentroByIdUsuario);
+router.get(path+"/usuario/:id_usuario", verificarToken, getCentroByIdUserSuAdmin);
 
 
 export default router;

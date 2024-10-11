@@ -1,10 +1,17 @@
 import { pool } from "../db.js";
-import  moment  from "moment";
+//import  moment  from "moment";
+import { 
+  registroAuditoria, 
+  getUsuarioCreadorRegistro, 
+  getFechaCreacionRegistro, 
+  getUsuarioActualizoRegistro, 
+  getFechaActualizacionRegistro 
+} from "../controllers/auditoria.controller.js";
 
 export const createEvento = async (req, res) => {
   try {
     //console.log(req.body)
-    const { title, motivo, start, end, nota, color, id_medico, id_clinica, id_usuario, fecha_creacion} = req.body;
+    const { title, motivo, start, end, nota, color, id_clinica, id_usuario_creador, fecha_creacion} = req.body;
 
     console.log("fecha_creacion: "+fecha_creacion)
 
@@ -13,24 +20,28 @@ export const createEvento = async (req, res) => {
     const id_tipo_pago='TP_PG_NA'
 
     const [result] = await pool.query(`
-      INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_paciente, id_clinica, id_usuario, fecha_creacion) 
-      VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(UUID()), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)
-      `,[title, motivo || "", start, end, nota, id_estatus_cita, id_estatus_pago,id_tipo_pago, id_clinica, id_usuario, fecha_creacion]
+      INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_clinica) 
+      VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?))
+      `,[title, motivo || "", start, end, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_clinica]
     );
 
     if (result.affectedRows === 1) {
-      console.log("Cita registrada")
+      console.log("Evento registrado")
     }
 
-    const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM citas WHERE titulo = ? AND fecha_hora_inicio = ? AND BIN_TO_UUID(id_clinica) = ? AND BIN_TO_UUID(id_usuario) = ? AND fecha_creacion = ?"
-    , [title, start, id_clinica, id_usuario, fecha_creacion]);
+    const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM citas WHERE titulo = ? AND nota = ? AND fecha_hora_inicio = ? AND BIN_TO_UUID(id_clinica) = ?"
+    , [title, nota, start, id_clinica]);
 
     if (!idResult.length) {
       return res.status(500).json({ message: "No se encontró el ID del evento insertado" });
     }
 
     const { id } = idResult[0];
-    res.status(201).json({ id, title, motivo, start, end, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_medico, id_clinica, id_usuario, fecha_creacion });
+
+    // ------------------------------------- REGISTRO
+    registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'citas-eventos', fecha_creacion)
+
+    res.status(201).json({ id, title, motivo, start, end });
     
   } catch (error) {
     console.log(error)
@@ -41,34 +52,37 @@ export const createEvento = async (req, res) => {
 
 export const createCita = async (req, res) => {
     try {
+      console.log("crear cita::")
       //console.log(req.body)
-      const { title, motivo, start, end, nota, color, id_medico, id_paciente, id_clinica, id_usuario, fecha_creacion} = req.body;
-
-      console.log("fecha_creacion: "+fecha_creacion)
+      const { title, motivo, start, end, nota, color, id_paciente, id_usuario_medico, id_clinica, id_usuario_creador, fecha_creacion} = req.body;
 
       const id_estatus_cita = color;
       const id_estatus_pago = 'EST_PG_SNP';
       const id_tipo_pago='TP_PG_NA'
 
       const [result] = await pool.query(`
-        INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_paciente, id_clinica, id_usuario, fecha_creacion) 
-        VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?), ?)
-        `,[title, motivo, start, end, nota, id_estatus_cita, id_estatus_pago,id_tipo_pago, id_paciente, id_clinica, id_usuario, fecha_creacion]
+        INSERT INTO citas (id, titulo, motivo, fecha_hora_inicio, fecha_hora_fin, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_paciente, id_usuario_medico, id_clinica) 
+        VALUES (UUID_TO_BIN(UUID()), ?, ?, ?, ?, ?, ?, ?, ?, UUID_TO_BIN(?), UUID_TO_BIN(?), UUID_TO_BIN(?))
+        `,[title, motivo, start, end, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_paciente, id_usuario_medico, id_clinica]
       );
 
       if (result.affectedRows === 1) {
         console.log("Cita registrada")
       }
 
-      const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM citas WHERE titulo = ? AND fecha_hora_inicio = ? AND BIN_TO_UUID(id_clinica) = ? AND BIN_TO_UUID(id_usuario) = ? AND fecha_creacion = ?"
-      , [title, start, id_clinica, id_usuario, fecha_creacion]);
+      const [idResult] = await pool.execute("SELECT BIN_TO_UUID(id) as id FROM citas WHERE titulo = ? AND motivo = ? AND fecha_hora_inicio = ? AND BIN_TO_UUID(id_paciente) = ? AND BIN_TO_UUID(id_clinica) = ?"
+      , [title, motivo, start, id_paciente, id_clinica]);
 
       if (!idResult.length) {
         return res.status(500).json({ message: "No se encontró el ID de la cita insertada" });
       }
   
       const { id } = idResult[0];
-      res.status(201).json({ id, title, motivo, start, end, nota, id_estatus_cita, id_estatus_pago, id_tipo_pago, id_medico, id_paciente, id_clinica, id_usuario, fecha_creacion });
+
+      // ------------------------------------- REGISTRO
+      registroAuditoria(id, id_usuario_creador, id_clinica, 'CREATE', 'citas', fecha_creacion)
+
+      res.status(201).json({ id, title, motivo, start, end });
       
     } catch (error) {
       console.log(error)
@@ -76,7 +90,9 @@ export const createCita = async (req, res) => {
     }
   };
 
+
   export const getCitas = async (req, res) => {
+    console.log("getCitas")
     try {
       const { id_clinica } = req.params;
 
@@ -88,15 +104,17 @@ export const createCita = async (req, res) => {
         DATE_FORMAT(c.fecha_hora_fin, '%Y-%m-%d %H:%i:%s') AS fecha_hora_fin,
         c.motivo,
         c.nota,
+        c.id_estatus_cita,
         CONCAT(p.nombre, ' ', p.apellidop, ' ', p.apellidom) AS nombre_paciente,
         BIN_TO_UUID(p.id) AS id_paciente,
         p.nombre,
         p.apellidop,
         p.apellidom,
         p.edad,
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario)) AS nombre_usuario_creador,
-        c.id_estatus_cita,
-        DATE_FORMAT(c.fecha_creacion, '%d/%m/%Y %H:%i:%s') AS fecha_creacion
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) 
+          FROM usuarios 
+          WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico
+
       FROM citas c
       LEFT JOIN pacientes p ON c.id_paciente = p.id
       WHERE BIN_TO_UUID(c.id_clinica) = ? 
@@ -120,8 +138,11 @@ export const createCita = async (req, res) => {
           notas: cita.nota,
           id_paciente: cita.id_paciente,
           nombre_paciente: cita.nombre_paciente,
+          nombre_usuario_medico: cita.nombre_usuario_medico,
           nombre_usuario_creador: cita.nombre_usuario_creador,
-          fecha_creacion: cita.fecha_creacion
+          fecha_creacion: cita.fecha_creacion,
+          nombre_usuario_actualizo: cita.nombre_usuario_actualizo,
+          fecha_actualizacion: cita.fecha_actualizacion
         }
       }));
 
@@ -134,8 +155,15 @@ export const createCita = async (req, res) => {
   };
 
   export const getCitaById = async (req, res) => {
+    console.log("getCitaById")
     try {
       const { id } = req.params;
+
+      const usuarioCreador = await getUsuarioCreadorRegistro(id);
+      const fechaCreacion = await getFechaCreacionRegistro(id);
+      const usuarioActualizo = await getUsuarioActualizoRegistro(id);
+      const fechaActualizacion = await getFechaActualizacionRegistro(id);
+
       const [rowsCitas] = await pool.query(`
       SELECT 
         BIN_TO_UUID(c.id) AS id,  
@@ -149,13 +177,21 @@ export const createCita = async (req, res) => {
         p.edad,
         p.telefono,
         BIN_TO_UUID(c.id_paciente) AS id_paciente,
-        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) FROM usuarios WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario)) AS nombre_usuario_creador,
-        DATE_FORMAT(c.fecha_creacion, '%d-%m-%Y %H:%i:%s') AS fecha_creacion
+        BIN_TO_UUID(c.id_usuario_medico) AS id_usuario_medico,
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) 
+          FROM usuarios 
+          WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico,
+
+        ? AS nombre_usuario_creador,
+        ? AS fecha_creacion,
+        ? AS nombre_usuario_actualizo,    
+        ? AS fecha_actualizacion
+
       FROM citas c
       INNER JOIN pacientes p ON c.id_paciente = p.id
       WHERE BIN_TO_UUID(c.id) = ? 
       ORDER BY c.autoincremental DESC
-      `, [id]);
+      `, [usuarioCreador, fechaCreacion, usuarioActualizo, fechaActualizacion, id]);
 
       if (rowsCitas.length <= 0) {
         return res.status(404).json({ message: "Cita no encontrada" });
@@ -174,7 +210,7 @@ export const createCita = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
-      const { title, motivo, start, end, nota, id_paciente } = req.body;
+      const { title, motivo, start, end, nota, id_paciente, id_usuario_medico, id_usuario_actualizo, id_clinica, fecha_actualizacion } = req.body;
 
       const [result] = await pool.query(
         `UPDATE citas 
@@ -184,18 +220,22 @@ export const createCita = async (req, res) => {
           fecha_hora_inicio = IFNULL(?, fecha_hora_inicio), 
           fecha_hora_fin = IFNULL(?, fecha_hora_fin), 
           nota = IFNULL(?, nota),
-          id_paciente = IFNULL(UUID_TO_BIN(?), id_paciente)
+          id_paciente = IFNULL(UUID_TO_BIN(?), id_paciente),
+          id_usuario_medico = IFNULL(UUID_TO_BIN(?), id_usuario_medico)
+
         WHERE 
           BIN_TO_UUID(id) = ?`,
-        [title, motivo, start, end, nota, id_paciente, id]
+        [title, motivo, start, end, nota, id_paciente, id_usuario_medico, id]
       );
   
       if (result.affectedRows === 0)
         return res.status(404).json({ message: "Cita no encontrada" });
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, titulo AS title FROM citas WHERE BIN_TO_UUID(id) = ?"
-        ,[id]);
+      
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id)id, titulo AS title FROM citas WHERE BIN_TO_UUID(id) = ?",[id]);
 
-      //console.log(rows[0])
+      // ------------------------------------- REGISTRO
+      registroAuditoria(id, id_usuario_actualizo, id_clinica, 'UPDATE', 'citas', fecha_actualizacion)
+
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
@@ -208,11 +248,16 @@ export const createCita = async (req, res) => {
     try {
       //console.log(req.body)
       const { id } = req.params;
+      const { id_usuario_elimino, id_clinica, fecha_eliminacion } = req.query;
+
       const [rows] = await pool.query("DELETE FROM citas WHERE id = uuid_to_bin(?)", [id]);
       if (rows.affectedRows <= 0) {
         return res.status(404).json({ message: "Cita no encontrada" });
       }
   
+      // ------------------------------------- REGISTRO
+      registroAuditoria(id, id_usuario_elimino, id_clinica, 'DELETE', 'citas', fecha_eliminacion)
+
       res.json({id});
     } catch (error) {
       console.log(error)
@@ -222,7 +267,7 @@ export const createCita = async (req, res) => {
 
   export const getCitasByIdPaciente = async (req, res) => {
     try {
-      console.log("Entroooo")
+      console.log("getCitasByIdPaciente")
       const { id_paciente } = req.params;
 
       const [rowsCitas] = await pool.query(`
@@ -235,14 +280,17 @@ export const createCita = async (req, res) => {
         BIN_TO_UUID(p.id) AS id_paciente,
         p.nombre,
         p.apellidop,
-        p.apellidom
+        p.apellidom,
+        (SELECT CONCAT(nombre, ' ', apellidop, ' ', apellidom) 
+          FROM usuarios 
+          WHERE BIN_TO_UUID(id) = BIN_TO_UUID(c.id_usuario_medico)) AS nombre_usuario_medico
       FROM citas c
       LEFT JOIN pacientes p ON c.id_paciente = p.id
       WHERE BIN_TO_UUID(c.id_paciente) = ? 
       ORDER BY c.autoincremental DESC
       `, [id_paciente]);
 
-      console.log(rowsCitas)
+      //console.log(rowsCitas)
       res.json(rowsCitas);
   
     } catch (error) {

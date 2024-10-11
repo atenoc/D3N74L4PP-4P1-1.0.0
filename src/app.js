@@ -15,13 +15,18 @@ import diagnosticosRoutes from "./routes/diagnosticos.routes.js";
 import tratamientosRoutes from "./routes/tratamientos.routes.js";
 import seguimientosRoutes from "./routes/seguimientos.routes.js";
 import planesRoutes from "./routes/planes.routes.js";
+import uploadsRoutes from "./routes/uploads.routes.js";
+import auditoriaRoutes from "./routes/auditoria.routes.js";
 
 const app = express();
 
 // Middlewares
 app.use(morgan("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended:false })) // entender informacion recibida de un formulario html
+//app.use(express.json());
+//app.use(express.urlencoded({ extended:false })) // entender informacion recibida de un formulario html
+app.use(express.json({ limit: '50mb' }));  // Aumentar límite de JSON
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));  // Aumentar límite para formularios
+
 app.use(cors()) //
 
 // Routes
@@ -39,6 +44,8 @@ app.use("/api", diagnosticosRoutes);
 app.use("/api", tratamientosRoutes);
 app.use("/api", seguimientosRoutes);
 app.use("/api", planesRoutes);
+app.use("/api", uploadsRoutes);
+app.use("/api", auditoriaRoutes);
 
 app.use((req, res, next) => {
   res.status(404).json({ message: "End point no encontrado" });

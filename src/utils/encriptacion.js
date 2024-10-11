@@ -14,3 +14,12 @@ export function getDecryptedPassword(password){
     }
     return null;
 }
+
+export function getDecryptedVerificationCode(code){
+  const encryptedCodeVerification = code;
+  if (encryptedCodeVerification) {
+    const bytes = CryptoJS.AES.decrypt(encryptedCodeVerification, SECRET_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  }
+  return null;
+}
