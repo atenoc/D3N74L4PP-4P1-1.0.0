@@ -6,7 +6,9 @@ import {
     getUserByCorreo,
     validarUsuarioActivo,
     getPassByIdUser,
-    updateUserPassword
+    updateUserPassword,
+    generaSecreto,
+    validarSecreto2FA
 } from "../controllers/seguridad.controller.js";
 
 const router = Router();
@@ -16,15 +18,17 @@ const path = "/seguridad"
 router.post(path+'/login', login)
 
 // getUserByCorreo - After Login 2
-router.post(path+"/usuario/correo", verificarToken, getUserByCorreo) 
-
+router.post(path+"/usuario/correo", getUserByCorreo) 
 // verificar usuario activo - After Login 3 - Sidebar/Header/Footer
-router.post(path+"/verificar/usuario", verificarToken, validarUsuarioActivo) 
+router.post(path+"/valida/usuario/activo", verificarToken, validarUsuarioActivo) 
 
 // old
 //router.get(path+'/restringido', verificarToken, getRestringido)
 
 router.get(path+"/:id/contrasena", verificarToken, getPassByIdUser);
 router.patch(path+"/password/usuario/:id", verificarToken, updateUserPassword);
+
+router.put(path+"/genera-secreto/usuario/:id", verificarToken, generaSecreto);
+router.post(path+"/validar-secreto", validarSecreto2FA) 
 
 export default router;

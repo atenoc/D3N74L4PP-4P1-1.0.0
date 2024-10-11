@@ -3,20 +3,22 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { getDecryptedPassword } from "../utils/encriptacion.js";
 import { registroAcceso } from "../controllers/auditoria.controller.js";
+import speakeasy from "speakeasy";
+import QRCode from 'qrcode';
 
 export const login = async (req, res) => {
     try {
-        console.log(">>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> Logueando <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
+        //console.log(">>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> Logueando <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
         //console.log(req.body)
 
         const { correo, llave, fecha } =  req.body
         const ipOrigen = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log("ipOrigen:: "+ipOrigen)
+        //console.log("ipOrigen:: "+ipOrigen)
 
-        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol FROM usuarios WHERE correo = ? ", [correo]);
+        const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, secreto FROM usuarios WHERE correo = ? ", [correo]);
 
         if (rows.length <= 0) {
-            console.log("Usuario no encontrado | seguridad controller")
+            //console.log("Usuario no encontrado | seguridad controller")
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
@@ -30,11 +32,17 @@ export const login = async (req, res) => {
             const match = await bcrypt.compare(desLlave, user.llave);
 
             if(match){
+              
+              if(rows[0].secreto){
+                console.log("Este USUARIO tiene SECRETO")
+                res.status(200).json({id_usuario:rows[0].id, secreto:true}) 
+              }else{
                 console.log("Id logueado: "+rows[0].id)
                 registroAcceso(rows[0].id, ipOrigen, 'Exitoso', fecha)
 
                 const token = jwt.sign({_id: rows[0].id}, 'secretkey')
                 res.status(200).json({token}) 
+              }
             }else{
               registroAcceso(rows[0].id, ipOrigen, 'Fallido', fecha)
                 console.log("Contraseña incorrecta")
@@ -46,6 +54,63 @@ export const login = async (req, res) => {
         console.log(error)
         return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (login)" });
     }
+}
+
+export const validarSecreto2FA = async (req, res) => {
+  try {
+      console.log(">>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> 2FA <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
+
+      const { correo, codigoIngresado } =  req.body
+      console.log(req.body)
+      const desCode = getDecryptedPassword(codigoIngresado);
+
+      const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, secreto FROM usuarios WHERE correo = ? ", [correo]);
+
+      if (rows.length <= 0) {
+          //console.log("Usuario no encontrado | seguridad controller")
+          return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      if (rows.length === 1){
+        const userSecret = rows[0].secreto;
+
+        console.log('Secreto:', userSecret);
+        console.log('Código ingresado:', codigoIngresado);
+        //console.log('Código esperado:', speakeasy.totp({ secret: userSecret, encoding: 'base32' }));
+        //console.log('¿Es una cadena?', typeof userSecret === 'string');
+        
+        /*const expectedCode = speakeasy.totp({
+          secret: userSecret, // Debe ser una cadena
+          encoding: 'base32'
+        });
+        console.log('Código esperado:', expectedCode);
+        */
+
+        const valid = speakeasy.totp.verify({
+          secret: userSecret, // el secreto almacenado en la base de datos
+          encoding: 'base32',
+          token: codigoIngresado // el código que el usuario ingresó
+        });
+
+        if (valid) {
+          // Código válido, genera el JWT
+          // const token = jwt.sign({ id: userId }, secretKey, { expiresIn: '1h' });
+          console.log("Id logueado: "+rows[0].id)
+          //registroAcceso(rows[0].id, ipOrigen, 'Exitoso', fecha)
+
+          const token = jwt.sign({_id: rows[0].id}, 'secretkey')
+          res.status(200).json({token}) 
+        } else {
+          //registroAcceso(rows[0].id, ipOrigen, 'Fallido', fecha)
+          console.log("Código de verificación incorrecto")
+          return res.status(400).json({ message: "Código de verificación incorrecto" });
+        }
+      }
+
+  } catch (error) {
+      console.log(error)
+      return res.status(500).json({ message: "Ocurrió un error al obtener el usuario (login)" });
+  }
 }
 
 // getUsuarioByCorreo // After Login 2
@@ -84,7 +149,7 @@ export const getUserByCorreo = async (req, res) => {
 // validarUsuarioActivo - id usuario / correo // After Login 3
 export const validarUsuarioActivo = async (req, res) => {
     try {
-      console.log("Validando ------------------------------------------------------------------------------------------------------------------------------------------");
+      console.log("Validando Usuario Activo ------------------------------------------------------------------------------------------------------------------------------------------");
       //console.log(req.body)
       const {id, correo, id_clinica } = req.body;
       const [rows] = await pool.query(`
@@ -167,4 +232,48 @@ export const updateUserPassword = async (req, res) => {
       console.log(error)
       return res.status(500).json({ message: "Ocurrió un error al actualizar la contraseña" });
     }
+};
+
+// Generar secreto
+export const generaSecreto = async (req, res) => {
+  try {
+    console.log("Genera secreto");
+    const { id } = req.params;
+    
+    const [usuario] = await pool.query(
+      "SELECT correo FROM usuarios WHERE BIN_TO_UUID(id) = ?",
+      [id]
+    );
+
+    if (usuario.length === 0) {
+      console.log("Usuario no encontrado en generaSecreto");
+      return res.status(404).json({ message: "Usuario no encontrado en generaSecreto" });
+    }
+
+    const correo = usuario[0].correo;
+    const secret = speakeasy.generateSecret({
+      length: 20,
+    });
+
+    // Construcción manual del URL
+    const otpauthUrl = `otpauth://totp/DentalApp:${correo}?secret=${secret.base32}&issuer=DentalApp`;
+
+    await pool.query(
+      "UPDATE usuarios SET secreto = ? WHERE BIN_TO_UUID(id) = ?",
+      [secret.base32, id]
+    );
+
+    console.log("Secreto generado correctamente");
+    console.log(otpauthUrl); // Asegúrate de que esté bien formado
+
+    // Generar el QR
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+    // Devolver el QR como una imagen
+    res.json({ qr: qrCodeDataUrl });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Ocurrió un error al generar el secreto" });
+  }
 };
