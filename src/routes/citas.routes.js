@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { verificarToken } from "../controllers/verificarToken.js";
+import { authMiddleware } from "../controllers/verificarToken.js";
 import {
 
   createEvento,
@@ -15,16 +16,16 @@ import {
 const router = Router();
 const path = "/citas"
 
-router.post(path+"/evento", verificarToken, createEvento);
-router.post(path, verificarToken, createCita);
-router.get(path+"/clinica/:id_clinica", verificarToken, getCitas);
-router.get(path+"/:id", verificarToken, getCitaById);
+router.post(path+"/evento", authMiddleware, createEvento);
+router.post(path, authMiddleware, createCita);
+router.get(path+"/clinica/:id_clinica", authMiddleware, getCitas);
+router.get(path+"/:id", authMiddleware, getCitaById);
 
-router.patch(path+"/:id", verificarToken, updateCita);
+router.patch(path+"/:id", authMiddleware, updateCita);
 
 // DELETE One
-router.delete(path+"/:id", verificarToken, deleteCita);
+router.delete(path+"/:id", authMiddleware, deleteCita);
 
-router.get(path+"/paciente/:id_paciente", verificarToken, getCitasByIdPaciente);
+router.get(path+"/paciente/:id_paciente", authMiddleware, getCitasByIdPaciente);
 
 export default router;

@@ -27,7 +27,12 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: '50mb' }));  // Aumentar límite de JSON
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));  // Aumentar límite para formularios
 
-app.use(cors()) //
+//app.use(cors()) //
+// Configuración de CORS
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' ? 'https://miaplicacion.com' : 'http://localhost:4200', // Origen Cliente
+  credentials: true // Permitir cookies
+}));
 
 // Routes
 app.use("/", indexRoutes);

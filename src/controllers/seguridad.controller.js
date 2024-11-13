@@ -5,16 +5,34 @@ import { getDecryptedPassword } from "../utils/encriptacion.js";
 import { registroAcceso } from "../controllers/auditoria.controller.js";
 import speakeasy from "speakeasy";
 import QRCode from 'qrcode';
+import cookie from 'cookie';
+
+const cookieOptions = {
+  httpOnly: true, // La cookie no es accesible a JavaScript
+  secure: process.env.NODE_ENV === 'production', // true si es producción, false si es local
+  maxAge: 60 * 60 * 12, // 12 horas (media día)
+  expires: new Date(Date.now() + 60 * 60 * 12 * 1000), // Expira en 12 horas (media día).
+  path: '/', // La cookie es válida en todo el sitio
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' en producción, 'lax' en local
+  // domain: 'tu-dominio.com' // Cambia esto a tu dominio (opcional)
+};
+
+//test
+export const setCookie = (req, res) => {
+  res.setHeader('Set-Cookie', cookie.serialize('testCookie', 'testValue', {
+      httpOnly: true,
+      maxAge: 60 * 60 * 24,
+      path: '/',
+      sameSite: true // Este valor debería ser aceptado
+  }));
+  res.status(200).json({ message: 'Cookie establecida' });
+};
 
 export const login = async (req, res) => {
     try {
         //console.log(">>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> >>>>>>>>>> Logueando <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<< <<<<<<<<<<")
-        //console.log(req.body)
-
         const { correo, llave, fecha } =  req.body
         const ipOrigen = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        //console.log("ipOrigen:: "+ipOrigen)
-
         const [rows] = await pool.query("SELECT BIN_TO_UUID(id) id, correo, llave, id_rol, secreto FROM usuarios WHERE correo = ? ", [correo]);
 
         if (rows.length <= 0) {
@@ -23,11 +41,7 @@ export const login = async (req, res) => {
         }
 
         if (rows.length === 1){
-
-            //console.log("Llave encript: "+llave)
             const desLlave = getDecryptedPassword(llave);
-            //console.log("Llave real: "+desLlave)
-
             const user = rows[0];
             const match = await bcrypt.compare(desLlave, user.llave);
 
@@ -39,8 +53,11 @@ export const login = async (req, res) => {
               }else{
                 console.log("Id logueado: "+rows[0].id)
                 registroAcceso(rows[0].id, ipOrigen, 'Exitoso', fecha)
-
                 const token = jwt.sign({_id: rows[0].id}, 'secretkey')
+
+                // Establecer la cookie con propiedades de seguridad
+                res.setHeader('Set-Cookie', cookie.serialize('token', token, cookieOptions));
+
                 res.status(200).json({token}) 
               }
             }else{
@@ -76,10 +93,11 @@ export const validarSecreto2FA = async (req, res) => {
 
         console.log('Secreto:', userSecret);
         console.log('Código ingresado:', codigoIngresado);
-        //console.log('Código esperado:', speakeasy.totp({ secret: userSecret, encoding: 'base32' }));
-        //console.log('¿Es una cadena?', typeof userSecret === 'string');
-        
-        /*const expectedCode = speakeasy.totp({
+
+        /*
+        console.log('Código esperado:', speakeasy.totp({ secret: userSecret, encoding: 'base32' }));
+        console.log('¿Es una cadena?', typeof userSecret === 'string');  
+        const expectedCode = speakeasy.totp({
           secret: userSecret, // Debe ser una cadena
           encoding: 'base32'
         });
@@ -93,12 +111,13 @@ export const validarSecreto2FA = async (req, res) => {
         });
 
         if (valid) {
-          // Código válido, genera el JWT
-          // const token = jwt.sign({ id: userId }, secretKey, { expiresIn: '1h' });
           console.log("Id logueado: "+rows[0].id)
-          //registroAcceso(rows[0].id, ipOrigen, 'Exitoso', fecha)
-
           const token = jwt.sign({_id: rows[0].id}, 'secretkey')
+          res.setHeader('Set-Cookie', cookie.serialize('token', token, cookieOptions));
+          // Imprimir el token en la consola del servidor
+          console.log('Token establecido en cookie:', token);
+
+          console.log("COOKIE devuelta por 2FA")
           res.status(200).json({token}) 
         } else {
           //registroAcceso(rows[0].id, ipOrigen, 'Fallido', fecha)
@@ -113,11 +132,24 @@ export const validarSecreto2FA = async (req, res) => {
   }
 }
 
+export const logout = (req, res) => {
+  console.log("Logout")
+  res.setHeader('Set-Cookie', cookie.serialize('token', '', {
+      httpOnly: true,
+      maxAge: 0, // Establece la cookie para que expire inmediatamente
+      path: '/',
+  }));
+
+  console.log("Logout exitoso")
+  return res.status(200).json({ message: 'Logout exitoso' });
+};
+
 // getUsuarioByCorreo // After Login 2
 export const getUserByCorreo = async (req, res) => {
     console.log("INICIANDO...................................................................................................................................................................... ")
     try {
-      //console.log(req.body)
+      console.log("Valida Usuario Por Correo............")
+      console.log(req.body)
       //const {correo } = req.params;
       const { correo } = req.body;
       console.log("Correo Login: " + correo)
@@ -135,9 +167,10 @@ export const getUserByCorreo = async (req, res) => {
       `, [correo]);
 
       if (rows.length <= 0) {
+        console.log("Usuario N0 encontrado por correo")
         return res.status(404).json({ message: "Usuario no encontrado (por correo)" });
       }
-      //console.log(rows)
+      console.log(rows[0])
       res.json(rows[0]);
     } catch (error) {
       console.log(error)
